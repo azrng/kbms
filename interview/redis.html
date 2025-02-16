@@ -1,23 +1,22 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN" data-theme="light">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <meta name="generator" content="VuePress 2.0.0-beta.63" />
-    <meta name="theme" content="VuePress Theme Hope" />
-    <meta property="og:url" content="https://kbms.vercel.app/interview/redis.html"><meta property="og:site_name" content="知识库"><meta property="og:title" content="Redis面试题"><meta property="og:description" content="1、Redis 有哪几种数据淘汰策略？ 答： noeviction:返回错误当内存限制达到，并且客户端尝试执行会让更多内存被使用的命令。 allkeys-lru: 尝试回收最少使用的键（LRU），使得新添加的数据有空间存放。 volatile-lru: 尝试回收最少使用的键（LRU），但仅限于在过期集合的键,使得新添加的数据有空间存放。 allkeys-random: 回收随机的键使得新添加的数据有空间存放。 volatile-random: 回收随机的键使得新添加的数据有空间存放，但仅限于在过期集合的键。 volatile-ttl: 回收在过期集合的键，并且优先回收存活时间（TTL）较短的键,使得新添加的数据有空间存放。"><meta property="og:type" content="article"><meta property="og:locale" content="zh-CN"><meta property="og:updated_time" content="2023-06-30T11:02:46.000Z"><meta property="article:author" content="azrng"><meta property="article:tag" content="面试题"><meta property="article:published_time" content="2023-03-24T00:00:00.000Z"><meta property="article:modified_time" content="2023-06-30T11:02:46.000Z"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"Redis面试题","image":[""],"datePublished":"2023-03-24T00:00:00.000Z","dateModified":"2023-06-30T11:02:46.000Z","author":[{"@type":"Person","name":"azrng"}]}</script><title>Redis面试题 | 知识库</title><meta name="description" content="1、Redis 有哪几种数据淘汰策略？ 答： noeviction:返回错误当内存限制达到，并且客户端尝试执行会让更多内存被使用的命令。 allkeys-lru: 尝试回收最少使用的键（LRU），使得新添加的数据有空间存放。 volatile-lru: 尝试回收最少使用的键（LRU），但仅限于在过期集合的键,使得新添加的数据有空间存放。 allkeys-random: 回收随机的键使得新添加的数据有空间存放。 volatile-random: 回收随机的键使得新添加的数据有空间存放，但仅限于在过期集合的键。 volatile-ttl: 回收在过期集合的键，并且优先回收存活时间（TTL）较短的键,使得新添加的数据有空间存放。">
+    <meta name="generator" content="VuePress 2.0.0-rc.19" />
+    <meta name="theme" content="VuePress Theme Hope 2.0.0-rc.66" />
     <style>
       :root {
-        --bg-color: #fff;
+        --vp-c-bg: #fff;
       }
 
-      html[data-theme="dark"] {
-        --bg-color: #1d1e1f;
+      [data-theme="dark"] {
+        --vp-c-bg: #1b1b1f;
       }
 
       html,
       body {
-        background: var(--bg-color);
+        background: var(--vp-c-bg);
       }
     </style>
     <script>
@@ -30,11 +29,21 @@
         document.documentElement.setAttribute("data-theme", "dark");
       }
     </script>
-    <link rel="preload" href="/assets/style-bf044d62.css" as="style"><link rel="stylesheet" href="/assets/style-bf044d62.css">
-    <link rel="modulepreload" href="/assets/app-77ed49ef.js"><link rel="modulepreload" href="/assets/redis.html-e405660b.js"><link rel="modulepreload" href="/assets/plugin-vue_export-helper-c27b6911.js"><link rel="modulepreload" href="/assets/redis.html-6abc5f1b.js">
+    <meta property="og:url" content="https://azrng.gitee.io/kbms/kbms/interview/redis.html"><meta property="og:site_name" content="知识库"><meta property="og:title" content="Redis面试题"><meta property="og:description" content="1、Redis 有哪几种数据淘汰策略？ 答： noeviction:返回错误当内存限制达到，并且客户端尝试执行会让更多内存被使用的命令。 allkeys-lru: 尝试回收最少使用的键（LRU），使得新添加的数据有空间存放。 volatile-lru: 尝试回收最少使用的键（LRU），但仅限于在过期集合的键,使得新添加的数据有空间存放。 allkeys..."><meta property="og:type" content="website"><meta property="og:locale" content="zh-CN"><meta property="og:updated_time" content="2023-08-12T15:44:42.000Z"><meta property="article:author" content="azrng"><meta property="article:tag" content="面试题"><meta property="article:published_time" content="2023-03-24T00:00:00.000Z"><meta property="article:modified_time" content="2023-08-12T15:44:42.000Z"><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Redis面试题","description":"1、Redis 有哪几种数据淘汰策略？ 答： noeviction:返回错误当内存限制达到，并且客户端尝试执行会让更多内存被使用的命令。 allkeys-lru: 尝试回收最少使用的键（LRU），使得新添加的数据有空间存放。 volatile-lru: 尝试回收最少使用的键（LRU），但仅限于在过期集合的键,使得新添加的数据有空间存放。 allkeys..."}</script><script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?1f046e495f9c28ef302f30895bda829e";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script><title>Redis面试题 | 知识库</title><meta name="description" content="1、Redis 有哪几种数据淘汰策略？ 答： noeviction:返回错误当内存限制达到，并且客户端尝试执行会让更多内存被使用的命令。 allkeys-lru: 尝试回收最少使用的键（LRU），使得新添加的数据有空间存放。 volatile-lru: 尝试回收最少使用的键（LRU），但仅限于在过期集合的键,使得新添加的数据有空间存放。 allkeys...">
+    <link rel="preload" href="/kbms/assets/style-DicSTiUB.css" as="style"><link rel="stylesheet" href="/kbms/assets/style-DicSTiUB.css">
+    <link rel="modulepreload" href="/kbms/assets/app-pTjtTAfI.js"><link rel="modulepreload" href="/kbms/assets/redis.html-BxujNyno.js"><link rel="modulepreload" href="/kbms/assets/plugin-vue_export-helper-DlAUqK2U.js">
+    
   </head>
   <body>
-    <div id="app"><!--[--><!--[--><!--[--><span tabindex="-1"></span><a href="#main-content" class="vp-skip-link sr-only">跳至主要內容</a><!--]--><!----><!--]--><!----><!----><!--]--></div>
-    <script type="module" src="/assets/app-77ed49ef.js" defer></script>
+    <div id="app"><!--[--><!--[--><!--[--><span tabindex="-1"></span><a href="#main-content" class="vp-skip-link sr-only">跳至主要內容</a><!--]--><!----><!--]--><!--[--><!----><!--[--><!--]--><!--]--><!--]--></div>
+    <script type="module" src="/kbms/assets/app-pTjtTAfI.js" defer></script>
   </body>
 </html>

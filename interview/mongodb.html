@@ -1,23 +1,22 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN" data-theme="light">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <meta name="generator" content="VuePress 2.0.0-beta.63" />
-    <meta name="theme" content="VuePress Theme Hope" />
-    <meta property="og:url" content="https://kbms.vercel.app/interview/mongodb.html"><meta property="og:site_name" content="知识库"><meta property="og:title" content="MongoDB面试题"><meta property="og:description" content="1、MySQL与MongoDB之间最基本的差别是什么? 答：MySQL和MongoDB两者都是免费开源的数据库。MySQL和MongoDB有许多基本差别包括数据的表示(data representation)，查询，关系，事务，schema的设计和定义，标准化(normalization)，速度和性能。 通过比较MySQL和MongoDB，实际上我们是在比较关系型和非关系型数据库，即数据存储结构不同。详细阅读 2、MongoDB成为最好NoSQL数据库的原因是什么? 答：以下特点使得MongoDB成为最好的NoSQL数据库："><meta property="og:type" content="article"><meta property="og:locale" content="zh-CN"><meta property="og:updated_time" content="2023-06-30T11:02:46.000Z"><meta property="article:author" content="azrng"><meta property="article:tag" content="面试题"><meta property="article:published_time" content="2023-03-24T00:00:00.000Z"><meta property="article:modified_time" content="2023-06-30T11:02:46.000Z"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"MongoDB面试题","image":[""],"datePublished":"2023-03-24T00:00:00.000Z","dateModified":"2023-06-30T11:02:46.000Z","author":[{"@type":"Person","name":"azrng"}]}</script><title>MongoDB面试题 | 知识库</title><meta name="description" content="1、MySQL与MongoDB之间最基本的差别是什么? 答：MySQL和MongoDB两者都是免费开源的数据库。MySQL和MongoDB有许多基本差别包括数据的表示(data representation)，查询，关系，事务，schema的设计和定义，标准化(normalization)，速度和性能。 通过比较MySQL和MongoDB，实际上我们是在比较关系型和非关系型数据库，即数据存储结构不同。详细阅读 2、MongoDB成为最好NoSQL数据库的原因是什么? 答：以下特点使得MongoDB成为最好的NoSQL数据库：">
+    <meta name="generator" content="VuePress 2.0.0-rc.19" />
+    <meta name="theme" content="VuePress Theme Hope 2.0.0-rc.66" />
     <style>
       :root {
-        --bg-color: #fff;
+        --vp-c-bg: #fff;
       }
 
-      html[data-theme="dark"] {
-        --bg-color: #1d1e1f;
+      [data-theme="dark"] {
+        --vp-c-bg: #1b1b1f;
       }
 
       html,
       body {
-        background: var(--bg-color);
+        background: var(--vp-c-bg);
       }
     </style>
     <script>
@@ -30,11 +29,21 @@
         document.documentElement.setAttribute("data-theme", "dark");
       }
     </script>
-    <link rel="preload" href="/assets/style-bf044d62.css" as="style"><link rel="stylesheet" href="/assets/style-bf044d62.css">
-    <link rel="modulepreload" href="/assets/app-77ed49ef.js"><link rel="modulepreload" href="/assets/mongodb.html-4b6c381e.js"><link rel="modulepreload" href="/assets/plugin-vue_export-helper-c27b6911.js"><link rel="modulepreload" href="/assets/mongodb.html-3fc986cc.js">
+    <meta property="og:url" content="https://azrng.gitee.io/kbms/kbms/interview/mongodb.html"><meta property="og:site_name" content="知识库"><meta property="og:title" content="MongoDB面试题"><meta property="og:description" content="1、MySQL与MongoDB之间最基本的差别是什么? 答：MySQL和MongoDB两者都是免费开源的数据库。MySQL和MongoDB有许多基本差别包括数据的表示(data representation)，查询，关系，事务，schema的设计和定义，标准化(normalization)，速度和性能。 通过比较MySQL和MongoDB，实际上我们是..."><meta property="og:type" content="website"><meta property="og:locale" content="zh-CN"><meta property="og:updated_time" content="2023-08-12T15:44:42.000Z"><meta property="article:author" content="azrng"><meta property="article:tag" content="面试题"><meta property="article:published_time" content="2023-03-24T00:00:00.000Z"><meta property="article:modified_time" content="2023-08-12T15:44:42.000Z"><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"MongoDB面试题","description":"1、MySQL与MongoDB之间最基本的差别是什么? 答：MySQL和MongoDB两者都是免费开源的数据库。MySQL和MongoDB有许多基本差别包括数据的表示(data representation)，查询，关系，事务，schema的设计和定义，标准化(normalization)，速度和性能。 通过比较MySQL和MongoDB，实际上我们是..."}</script><script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?1f046e495f9c28ef302f30895bda829e";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script><title>MongoDB面试题 | 知识库</title><meta name="description" content="1、MySQL与MongoDB之间最基本的差别是什么? 答：MySQL和MongoDB两者都是免费开源的数据库。MySQL和MongoDB有许多基本差别包括数据的表示(data representation)，查询，关系，事务，schema的设计和定义，标准化(normalization)，速度和性能。 通过比较MySQL和MongoDB，实际上我们是...">
+    <link rel="preload" href="/kbms/assets/style-DicSTiUB.css" as="style"><link rel="stylesheet" href="/kbms/assets/style-DicSTiUB.css">
+    <link rel="modulepreload" href="/kbms/assets/app-pTjtTAfI.js"><link rel="modulepreload" href="/kbms/assets/mongodb.html-DF_eMcCX.js"><link rel="modulepreload" href="/kbms/assets/plugin-vue_export-helper-DlAUqK2U.js">
+    
   </head>
   <body>
-    <div id="app"><!--[--><!--[--><!--[--><span tabindex="-1"></span><a href="#main-content" class="vp-skip-link sr-only">跳至主要內容</a><!--]--><!----><!--]--><!----><!----><!--]--></div>
-    <script type="module" src="/assets/app-77ed49ef.js" defer></script>
+    <div id="app"><!--[--><!--[--><!--[--><span tabindex="-1"></span><a href="#main-content" class="vp-skip-link sr-only">跳至主要內容</a><!--]--><!----><!--]--><!--[--><!----><!--[--><!--]--><!--]--><!--]--></div>
+    <script type="module" src="/kbms/assets/app-pTjtTAfI.js" defer></script>
   </body>
 </html>

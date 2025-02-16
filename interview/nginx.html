@@ -1,23 +1,22 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN" data-theme="light">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <meta name="generator" content="VuePress 2.0.0-beta.63" />
-    <meta name="theme" content="VuePress Theme Hope" />
-    <meta property="og:url" content="https://kbms.vercel.app/interview/nginx.html"><meta property="og:site_name" content="知识库"><meta property="og:title" content="Nginx面试题"><meta property="og:description" content="1、nginx是如何实现高并发的？ 答：一个主进程，多个工作进程，每个工作进程可以处理多个请求，每进来一个request，会有一个worker进程去处理。但不是全程的处理，处理到可能发生阻塞的地方，比如向上游（后端）服务器转发request，并等待请求返回。那么，这个处理的worker继续处理其他请求，而一旦上游服务器返回了，就会触发这个事件，worker才会来接手，这个request才会接着往下走。由于web server的工作性质决定了每个request的大部份生命都是在网络传输中，实际上花费在server机器上的时间片不多。这是几个进程就解决高并发的秘密所在。即@skoo所说的webserver刚好属于网络io密集型应用，不算是计算密集型。"><meta property="og:type" content="article"><meta property="og:locale" content="zh-CN"><meta property="og:updated_time" content="2023-06-30T11:02:46.000Z"><meta property="article:author" content="azrng"><meta property="article:tag" content="面试题"><meta property="article:published_time" content="2023-03-24T00:00:00.000Z"><meta property="article:modified_time" content="2023-06-30T11:02:46.000Z"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"Nginx面试题","image":[""],"datePublished":"2023-03-24T00:00:00.000Z","dateModified":"2023-06-30T11:02:46.000Z","author":[{"@type":"Person","name":"azrng"}]}</script><title>Nginx面试题 | 知识库</title><meta name="description" content="1、nginx是如何实现高并发的？ 答：一个主进程，多个工作进程，每个工作进程可以处理多个请求，每进来一个request，会有一个worker进程去处理。但不是全程的处理，处理到可能发生阻塞的地方，比如向上游（后端）服务器转发request，并等待请求返回。那么，这个处理的worker继续处理其他请求，而一旦上游服务器返回了，就会触发这个事件，worker才会来接手，这个request才会接着往下走。由于web server的工作性质决定了每个request的大部份生命都是在网络传输中，实际上花费在server机器上的时间片不多。这是几个进程就解决高并发的秘密所在。即@skoo所说的webserver刚好属于网络io密集型应用，不算是计算密集型。">
+    <meta name="generator" content="VuePress 2.0.0-rc.19" />
+    <meta name="theme" content="VuePress Theme Hope 2.0.0-rc.66" />
     <style>
       :root {
-        --bg-color: #fff;
+        --vp-c-bg: #fff;
       }
 
-      html[data-theme="dark"] {
-        --bg-color: #1d1e1f;
+      [data-theme="dark"] {
+        --vp-c-bg: #1b1b1f;
       }
 
       html,
       body {
-        background: var(--bg-color);
+        background: var(--vp-c-bg);
       }
     </style>
     <script>
@@ -30,11 +29,21 @@
         document.documentElement.setAttribute("data-theme", "dark");
       }
     </script>
-    <link rel="preload" href="/assets/style-bf044d62.css" as="style"><link rel="stylesheet" href="/assets/style-bf044d62.css">
-    <link rel="modulepreload" href="/assets/app-77ed49ef.js"><link rel="modulepreload" href="/assets/nginx.html-ce93b2f1.js"><link rel="modulepreload" href="/assets/plugin-vue_export-helper-c27b6911.js"><link rel="modulepreload" href="/assets/nginx.html-46bb8834.js">
+    <meta property="og:url" content="https://azrng.gitee.io/kbms/kbms/interview/nginx.html"><meta property="og:site_name" content="知识库"><meta property="og:title" content="Nginx面试题"><meta property="og:description" content="1、nginx是如何实现高并发的？ 答：一个主进程，多个工作进程，每个工作进程可以处理多个请求，每进来一个request，会有一个worker进程去处理。但不是全程的处理，处理到可能发生阻塞的地方，比如向上游（后端）服务器转发request，并等待请求返回。那么，这个处理的worker继续处理其他请求，而一旦上游服务器返回了，就会触发这个事件，work..."><meta property="og:type" content="website"><meta property="og:locale" content="zh-CN"><meta property="og:updated_time" content="2023-08-12T15:44:42.000Z"><meta property="article:author" content="azrng"><meta property="article:tag" content="面试题"><meta property="article:published_time" content="2023-03-24T00:00:00.000Z"><meta property="article:modified_time" content="2023-08-12T15:44:42.000Z"><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Nginx面试题","description":"1、nginx是如何实现高并发的？ 答：一个主进程，多个工作进程，每个工作进程可以处理多个请求，每进来一个request，会有一个worker进程去处理。但不是全程的处理，处理到可能发生阻塞的地方，比如向上游（后端）服务器转发request，并等待请求返回。那么，这个处理的worker继续处理其他请求，而一旦上游服务器返回了，就会触发这个事件，work..."}</script><script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?1f046e495f9c28ef302f30895bda829e";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script><title>Nginx面试题 | 知识库</title><meta name="description" content="1、nginx是如何实现高并发的？ 答：一个主进程，多个工作进程，每个工作进程可以处理多个请求，每进来一个request，会有一个worker进程去处理。但不是全程的处理，处理到可能发生阻塞的地方，比如向上游（后端）服务器转发request，并等待请求返回。那么，这个处理的worker继续处理其他请求，而一旦上游服务器返回了，就会触发这个事件，work...">
+    <link rel="preload" href="/kbms/assets/style-DicSTiUB.css" as="style"><link rel="stylesheet" href="/kbms/assets/style-DicSTiUB.css">
+    <link rel="modulepreload" href="/kbms/assets/app-pTjtTAfI.js"><link rel="modulepreload" href="/kbms/assets/nginx.html-CwDRm8TC.js"><link rel="modulepreload" href="/kbms/assets/plugin-vue_export-helper-DlAUqK2U.js">
+    
   </head>
   <body>
-    <div id="app"><!--[--><!--[--><!--[--><span tabindex="-1"></span><a href="#main-content" class="vp-skip-link sr-only">跳至主要內容</a><!--]--><!----><!--]--><!----><!----><!--]--></div>
-    <script type="module" src="/assets/app-77ed49ef.js" defer></script>
+    <div id="app"><!--[--><!--[--><!--[--><span tabindex="-1"></span><a href="#main-content" class="vp-skip-link sr-only">跳至主要內容</a><!--]--><!----><!--]--><!--[--><!----><!--[--><!--]--><!--]--><!--]--></div>
+    <script type="module" src="/kbms/assets/app-pTjtTAfI.js" defer></script>
   </body>
 </html>
