@@ -28,7 +28,7 @@ jobs:
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.ACCESSTOKEN }}
           publish_dir: ./dist
           # 保持.nojekyll文件，确保GitHub Pages正确处理下划线开头的文件和目录
           enable_jekyll: false 
