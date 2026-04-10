@@ -601,6 +601,12 @@ BT下载工具
 ###  Neat Download Manager
 Neat Download Manager是一款非常好用的多线程下载管理器。它的功能跟IDM很像，支持HTTP、HTTPS、FTP协议、HTTP代理、SOCKS协议等，支持根据不同的下载状态、文件类型等进行管理下载。
 
+### Motrix Next
+
+Motrix Next 是一款开源的全功能下载管理器，基于原版 Motrix 从底层完全重写。使用 Tauri 2 (Rust) + Vue 3 替代了原有的 Electron + Vue 2 技术栈，安装包体积从约 80MB 缩减至约 20MB，资源占用更低。支持 HTTP、FTP、BitTorrent、磁力链等多种协议下载，具备暗色模式、系统托盘、Tracker 自动同步、速度控制、国际化等功能，跨平台支持 Windows、macOS 和 Linux。
+
+下载地址：[https://github.com/AnInsomniacy/motrix-next/releases](https://github.com/AnInsomniacy/motrix-next/releases)
+
 ### 4K Video Downloader
 
 如果是视频类的自媒体玩家，那么视频素材显得格外重要，我们一般会想要下载网络上的视频素材，进行加工和发布，市面上已有的且比较好用的，基本上是需要付费了。那么，这款神器对我来说是非常好用，且功能非常强大和稳定。它不仅支持现有的媒体网站，例如：Youtube，Vuneo，Tiktok，Blibli 等等，主要还是永久免费。
