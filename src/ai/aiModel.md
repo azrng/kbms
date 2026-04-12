@@ -50,6 +50,9 @@ qwen2.5-7b(通义千问)
 
 ANTHROPIC接口地址：https://open.bigmodel.cn/api/anthropic
 
+OpenAi编码套餐地址：https://open.bigmodel.cn/api/coding/paas/v4
+
+
 ## llama
 
 llama3.2：由 Meta 开发的开源人工智能模型系列，向量维度值为3072

@@ -29,7 +29,7 @@ MCP 之后又一 AI Agent 协议刷屏了：AG-UI 协议架构设计剖析：htt
 
 模型上下文协议（MCP）：基于Python的端到端实践教程：https://mp.weixin.qq.com/s/5kaMv46SOTxvuWe8itq6kQ
 
-## Mpc商店
+## Mcp商店
 
 mcpstore：[https://www..site/](https://www.mcpstore.site/)
 

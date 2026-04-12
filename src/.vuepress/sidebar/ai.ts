@@ -8,6 +8,7 @@ export const aiSidebar = [
     "modeTools.md",
     "useMcp.md",
     "aiHelpTool.md",
+    "skills.md",
     "dotNetCall.md",
     "pythonCall.md",
     "aiProject.md",
