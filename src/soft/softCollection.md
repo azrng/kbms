@@ -21,7 +21,7 @@ tag:
 
 [爱达杂货铺](https://adzhp.xyz/) [果汁导航](http://guozhivip.com/) [小众软件](https://www.appinn.com/) [有趣网址之家](https://youquhome.com/) [IDE激活](https://blog.idejihuo.com/)
 
-[机佬导航](http://jldzz.cn/)
+[机佬导航](http://jldzz.cn/) [AppStorrent](https://appstorrent.ru/)
 
 ## 桌面工具
 
