@@ -16,6 +16,46 @@ tag:
 
 本文整理常用 skills 的用途，并按使用场景分类，方便快速查找。每个 skill 的说明都控制在 100 字以内。
 
+## Superpowers 详解
+
+`superpowers` 是一套面向编码代理（Claude Code / Copilot CLI / Gemini CLI）的完整开发工作流体系，由多个子 Skill 组成，覆盖从构思到交付的全生命周期。它的核心理念是：**在任何操作之前先检查是否有适用的 Skill，用流程化的方式避免遗漏和返工。**
+
+### 使用原则
+
+1. **Skill 优先**：收到任务后，先判断是否有相关 Skill，哪怕只有 1% 的可能性也应先调用查看。
+2. **流程纪律**：刚性 Skill（如 TDD、调试）必须严格遵循；柔性 Skill（如模式参考）可根据实际场景灵活运用。
+3. **用户指令至上**：当 Skill 建议与用户明确指令冲突时，以用户指令为准。
+
+### 子 Skill 一览
+
+| 子 Skill | 触发场景 | 简要说明 |
+| --- | --- | --- |
+| `superpowers:brainstorming` | 开始任何创造性工作（新功能、组件、行为修改）前 | 探索用户意图、需求与设计，确保在动手前充分理解目标。 |
+| `superpowers:writing-plans` | 有明确需求或规格，准备多步骤实施前 | 编写结构化的实施计划，明确步骤、关键文件和架构取舍。 |
+| `superpowers:executing-plans` | 已有书面计划，需要在独立会话中逐步执行时 | 按计划逐步执行，设置检查点进行阶段性评审。 |
+| `superpowers:test-driven-development` | 实现任何功能或修复 Bug，在写实现代码前 | 先写测试、再写实现，确保代码可验证、可回归。 |
+| `superpowers:systematic-debugging` | 遇到 Bug、测试失败或意外行为时 | 系统化定位根因，避免盲目猜测和反复试错。 |
+| `superpowers:requesting-code-review` | 完成任务、实现主要功能或准备合并前 | 发起代码评审，验证工作是否满足需求并符合标准。 |
+| `superpowers:receiving-code-review` | 收到代码评审反馈，准备实施建议前 | 对反馈做技术严谨性验证，避免盲从或漏判。 |
+| `superpowers:dispatching-parallel-agents` | 面对 2+ 个可独立执行的并行任务时 | 拆分任务并行分派，加速执行。 |
+| `superpowers:subagent-driven-development` | 在当前会话中执行含独立任务的实施计划时 | 用子代理驱动开发，保持主会话上下文清洁。 |
+| `superpowers:using-git-worktrees` | 开始需要与当前工作区隔离的功能开发或计划执行前 | 创建隔离的 Git Worktree，避免影响主分支。 |
+| `superpowers:finishing-a-development-branch` | 实现完成、测试通过，需要决定如何集成工作时 | 引导完成开发分支的收尾工作（合并、PR 或清理）。 |
+| `superpowers:verification-before-completion` | 准备声明工作完成、已修复或测试通过前 | 先运行验证命令并确认输出，做到"先有证据再断言"。 |
+| `superpowers:writing-skills` | 创建新 Skill、编辑现有 Skill 或部署前验证时 | 指导 Skill 的编写、测试与发布流程。 |
+| `superpowers:using-superpowers` | 任何对话开始时 | 建立 Skill 发现与使用机制，确保在首次响应前完成 Skill 检查。 |
+
+### 典型工作流
+
+```
+需求分析 → brainstorming → writing-plans → (using-git-worktrees) →
+test-driven-development / subagent-driven-development →
+verification-before-completion → requesting-code-review →
+finishing-a-development-branch
+```
+
+遇到问题时随时插入 `systematic-debugging`，收到反馈时使用 `receiving-code-review`。
+
 ## 开发流程与规范
 
 | Skill | 简单说明 |
