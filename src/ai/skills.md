@@ -66,6 +66,15 @@ finishing-a-development-branch
 | `proactive-agent` | 偏主动推进型代理，适合自动发现下一步事项、风险点和可执行建议。 |
 | `self-improving-agent` | 用于复盘执行效果并持续优化提示、流程和行为策略。 |
 
+## 中文开发规范
+
+| Skill | 简单说明 |
+| --- | --- |
+| `chinese-code-review` | 中文代码审查规范，保持专业严谨的同时用符合国内团队文化的方式给出反馈。 |
+| `chinese-commit-conventions` | 中文 Git 提交规范，适配国内团队的 commit message 规范和 changelog 自动化。 |
+| `chinese-documentation` | 中文技术文档写作规范，排版、术语、结构一步到位，告别机翻味。 |
+| `chinese-git-workflow` | 适配国内 Git 平台和团队习惯的工作流规范，覆盖 Gitee、Coding、极狐 GitLab、CNB。 |
+
 ## 仓库协作与 Git 流程
 
 | Skill | 简单说明 |
@@ -82,6 +91,8 @@ finishing-a-development-branch
 | --- | --- |
 | `find-skills` | 用于发现、比较和安装 skills，适合不知道该用哪个 skill 时先检索。 |
 | `skill-creator` | 用于设计和编写新 skill，适合沉淀专用工作流、知识和工具接入。 |
+| `mcp-builder` | MCP 服务器构建方法论，系统化构建生产级 MCP 工具，让 AI 助手连接外部能力。 |
+| `workflow-runner` | 在 Claude Code / OpenClaw / Cursor 中直接运行 agency-orchestrator YAML 工作流，无需 API key。 |
 
 ## 应用开发与界面
 
