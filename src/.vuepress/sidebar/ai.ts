@@ -5,6 +5,7 @@ export const aiSidebar = [
     "readme.md",
     "aiModel.md",
     "prompts.md",
+    "imagesPrompt.md",
     "modeTools.md",
     "useMcp.md",
     "aiHelpTool.md",
