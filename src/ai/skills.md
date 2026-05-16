@@ -56,81 +56,198 @@ finishing-a-development-branch
 
 遇到问题时随时插入 `systematic-debugging`，收到反馈时使用 `receiving-code-review`。
 
-## 开发流程与规范
+## 文档与办公
 
-| Skill | 简单说明 |
-| --- | --- |
-| `pua` | 用于优化提示表达、强化约束和执行一致性，适合提升代理对需求的理解与落地质量。 |
-| `openspec` | 围绕需求、规格与计划展开，适合先写设计说明再实施的规范化开发流程。 |
-| `superpowers` | 一套面向编码代理的完整开发工作流，覆盖规划、调试、评审、验证与收尾。 |
-| `proactive-agent` | 偏主动推进型代理，适合自动发现下一步事项、风险点和可执行建议。 |
-| `self-improving-agent` | 用于复盘执行效果并持续优化提示、流程和行为策略。 |
+### docx
 
-## 中文开发规范
+- **说明**：创建、编辑和分析 Word 文档，支持批注、修订、格式保留与文本提取。
+- **来源**：GitHub：https://github.com/anthropics/skills/tree/main/skills/docx
 
-| Skill | 简单说明 |
-| --- | --- |
-| `chinese-code-review` | 中文代码审查规范，保持专业严谨的同时用符合国内团队文化的方式给出反馈。 |
-| `chinese-commit-conventions` | 中文 Git 提交规范，适配国内团队的 commit message 规范和 changelog 自动化。 |
-| `chinese-documentation` | 中文技术文档写作规范，排版、术语、结构一步到位，告别机翻味。 |
-| `chinese-git-workflow` | 适配国内 Git 平台和团队习惯的工作流规范，覆盖 Gitee、Coding、极狐 GitLab、CNB。 |
+### pdf
 
-## 仓库协作与 Git 流程
+- **说明**：处理 PDF 的提取、生成、拆分、合并和表单填写，适合批量文档任务。
+- **来源**：GitHub：https://github.com/anthropics/skills/tree/main/skills/pdf
 
-| Skill | 简单说明 |
-| --- | --- |
-| `gitnexus` | 面向 Git 仓库的上下文导航与关系梳理，便于理解分支、提交和代码关联。 |
-| `gitnexus-exploring` | 偏重代码库探索和依赖追踪，适合先摸清结构再继续开发或排障。 |
-| `opsx:sync` | 同步任务状态、上下文和工作结果，适合多步骤或多代理协作场景。 |
-| `opsx:verify` | 对执行结果做核验与完成度检查，避免遗漏约束、步骤或交付项。 |
-| `github` | 通过 `gh` CLI 操作 GitHub，适合处理 Issue、PR、Actions 和仓库查询。 |
+### pptx
 
-## 技能发现与构建
+- **说明**：用于创建、修改和分析 PowerPoint 演示文稿，适合自动化生成或整理幻灯片。
+- **来源**：GitHub：https://github.com/anthropics/skills/tree/main/skills/pptx
 
-| Skill | 简单说明 |
-| --- | --- |
-| `find-skills` | 用于发现、比较和安装 skills，适合不知道该用哪个 skill 时先检索。 |
-| `skill-creator` | 用于设计和编写新 skill，适合沉淀专用工作流、知识和工具接入。 |
-| `mcp-builder` | MCP 服务器构建方法论，系统化构建生产级 MCP 工具，让 AI 助手连接外部能力。 |
-| `workflow-runner` | 在 Claude Code / OpenClaw / Cursor 中直接运行 agency-orchestrator YAML 工作流，无需 API key。 |
+### xlsx
 
-## 应用开发与界面
+- **说明**：创建、编辑和分析电子表格，支持公式、格式、图表和多表数据处理。
+- **来源**：GitHub：https://github.com/anthropics/skills/tree/main/skills/xlsx
 
-| Skill | 简单说明 |
-| --- | --- |
-| `aspnet-core` | 用于 `ASP.NET Core` 项目的设计、重构、排错与升级，覆盖 API、Blazor、鉴权等场景。 |
-| `frontend-design` | 生成高质量前端页面与组件，强调视觉表现、创意细节和可落地代码。 |
+## 前端、UI 与浏览器
 
-## 内容创作与信息整理
+### frontend-design
 
-| Skill | 简单说明 |
-| --- | --- |
-| `blog-author` | 用于深度调研、博客提纲与长文写作，可输出结构化 Markdown 文章。 |
-| `news-summary` | 抓取可信新闻源并生成新闻简报，适合日报、快讯和世界动态摘要。 |
-| `summarize` | 汇总网页、PDF、图片、音频或视频内容，快速产出简洁摘要。 |
+- **说明**：生成高质量前端页面与组件，强调视觉表现、创意细节和可落地代码。
+- **来源**：GitHub：https://github.com/anthropics/skills/tree/main/skills/frontend-design
 
-## 文档与数据处理
+### ui-ux-pro-max
 
-| Skill | 简单说明 |
-| --- | --- |
-| `csv-pipeline` | 处理 CSV、TSV、JSON 数据，支持过滤、聚合、转换、去重和报表输出。 |
-| `docx` | 创建、编辑和分析 Word 文档，支持批注、修订、格式保留与文本提取。 |
-| `pdf` | 处理 PDF 的提取、生成、拆分、合并和表单填写，适合批量文档任务。 |
-| `pptx` | 用于创建、修改和分析 PowerPoint 演示文稿，适合自动化生成或整理幻灯片。 |
-| `xlsx` | 创建、编辑和分析电子表格，支持公式、格式、图表和多表数据处理。 |
+- **说明**：高质量 UI/UX 设计辅助，用于提升界面设计、交互体验和视觉表达。
+- **来源**：GitHub：https://github.com/nextlevelbuilder/ui-ux-pro-max-skill
 
-## 联网访问与采集
+### webapp-testing
 
-| Skill | 简单说明 |
-| --- | --- |
-| `tavily-search` | 基于 Tavily 做联网搜索与结果整理，适合研究型问答和资料收集。 |
-| `weather-advisor` | 查询实时天气和短期预报，并给出穿衣、出行和活动建议。 |
-| `web-access` | 统一处理联网操作，如搜索、抓取、登录后网页交互和动态页面访问。 |
-| `web-scraper` | 用 Python 抓取网页与结构化内容，适合搜索、采集链接和页面解析。 |
+- **说明**：基于 Playwright 的本地 Web 应用测试工具集，支持前端功能验证、UI 调试、页面截图及浏览器控制台日志采集。
+- **安装**：`npx skillsauth add alter123-zz/RaccoonClaw webapp-testing`
 
-## 自动化触达
+### Agent-browser
 
-| Skill | 简单说明 |
-| --- | --- |
-| `wechat-ui-sender` | 通过桌面微信界面自动发送消息，适合无官方 API 时的消息触达。 |
+- **说明**：浏览器自动化，用于在浏览器中打开、导航、检查、截图或测试本地与远程页面。
+- **来源**：GitHub：https://github.com/vercel-labs/agent-browser/tree/main/skills/agent-browser
 
+## 联网、搜索与数据处理
+
+### web-access
+
+- **说明**：统一处理联网操作，如搜索、抓取、登录后网页交互和动态页面访问。
+- **来源**：GitHub：https://github.com/eze-is/web-access
+
+### web-scraper
+
+- **说明**：用 Python 抓取网页与结构化内容，适合搜索、采集链接和页面解析。
+- **安装**：`openclaw skills install web-scraper`
+
+### tavily-search
+
+- **说明**：基于 Tavily 做联网搜索与结果整理，适合研究型问答和资料收集。
+- **安装**：`npx -y clawhub@latest install tavily-search`
+
+### csv-pipeline
+
+- **说明**：处理 CSV、TSV、JSON 数据，支持过滤、聚合、转换、去重和报表输出。
+- **安装**：`openclaw skills install csv-pipeline`
+
+### summarize
+
+- **说明**：汇总网页、PDF、图片、音频或视频内容，快速产出简洁摘要。
+- **安装**：`brew install steipete/tap/summarize`
+
+## 开发、调试与平台协作
+
+### aspnet-core
+
+- **说明**：用于 `ASP.NET Core` 项目的设计、重构、排错与升级，覆盖 API、Blazor、鉴权等场景。
+- **来源**：GitHub：https://github.com/openai/skills/blob/main/skills/.curated/aspnet-core/SKILL.md
+
+### github
+
+- **说明**：通过 `gh` CLI 操作 GitHub，适合处理 Issue、PR、Actions 和仓库查询。
+- **安装**：`npx clawhub@latest install github`
+
+### systematic-debugging
+
+- **说明**：系统化定位 Bug 根因，避免盲目猜测和反复试错。
+- **安装**：`openclaw skills install runesleo-systematic-debugging`
+
+### pua
+
+- **说明**：用于优化提示表达、强化约束和执行一致性，适合提升代理对需求的理解与落地质量。
+- **来源**：GitHub：https://github.com/tanweai/pua
+
+### openspec
+
+- **说明**：围绕需求、规格与计划展开，适合先写设计说明再实施的规范化开发流程。
+
+### gitnexus
+
+- **说明**：面向 Git 仓库的上下文导航与关系梳理，便于理解分支、提交和代码关联。
+
+### gitnexus-exploring
+
+- **说明**：偏重代码库探索和依赖追踪，适合先摸清结构再继续开发或排障。
+
+### opsx:sync
+
+- **说明**：同步任务状态、上下文和工作结果，适合多步骤或多代理协作场景。
+
+### opsx:verify
+
+- **说明**：对执行结果做核验与完成度检查，避免遗漏约束、步骤或交付项。
+
+### chinese-code-review
+
+- **说明**：中文代码审查规范，保持专业严谨的同时用符合国内团队文化的方式给出反馈。
+
+### chinese-commit-conventions
+
+- **说明**：中文 Git 提交规范，适配国内团队的 commit message 规范和 changelog 自动化。
+
+### chinese-documentation
+
+- **说明**：中文技术文档写作规范，排版、术语、结构一步到位，告别机翻味。
+
+### chinese-git-workflow
+
+- **说明**：适配国内 Git 平台和团队习惯的工作流规范，覆盖 Gitee、Coding、极狐 GitLab、CNB。
+
+## Agent 能力与工作流
+
+### skill-creator
+
+- **说明**：用于设计和编写新 skill，适合沉淀专用工作流、知识和工具接入。
+- **来源**：GitHub：https://github.com/anthropics/skills/tree/main/skills/skill-creator
+
+### find-skills
+
+- **说明**：用于发现、比较和安装 skills，适合不知道该用哪个 skill 时先检索。
+- **安装**：`npx clawhub@latest install find-skills`
+
+### proactive-agent
+
+- **说明**：偏主动推进型代理，适合自动发现下一步事项、风险点和可执行建议。
+- **安装**：`npx clawhub@latest install proactive-agent`
+
+### self-improving-agent
+
+- **说明**：用于复盘执行效果并持续优化提示、流程和行为策略。
+- **来源**：GitHub：https://github.com/peterskoett/self-improving-agent
+
+### brainstorming
+
+- **说明**：在创造性开发前进行需求澄清、方案探索和设计确认，帮助把想法转化为可执行规格。
+- **安装**：`openclaw skills install tlreal/core-brainstorming`
+
+### mcp-builder
+
+- **说明**：MCP 服务器构建方法论，系统化构建生产级 MCP 工具，让 AI 助手连接外部能力。
+
+### workflow-runner
+
+- **说明**：在 Claude Code / OpenClaw / Cursor 中直接运行 agency-orchestrator YAML 工作流，无需 API key。
+
+## 内容、生活与个人效率
+
+### blog-author
+
+- **说明**：用于深度调研、博客提纲与长文写作，可输出结构化 Markdown 文章。
+- **来源**：GitHub：https://github.com/AIDotNet/OpenCowork
+
+### news-summary
+
+- **说明**：抓取可信新闻源并生成新闻简报，适合日报、快讯和世界动态摘要。
+- **安装**：`npx clawhub@latest install news-summary`
+
+### tailored-resume-generator
+
+- **说明**：分析岗位描述并生成针对性简历，突出相关经验、技能和成果以提升面试机会。
+- **安装**：`npx skills i ComposioHQ/awesome-claude-skills/tailored-resume-generator`
+
+### weather-advisor
+
+- **说明**：查询实时天气和短期预报，并给出穿衣、出行和活动建议。
+- **安装**：`npx skillsauth add alter123-zz/RaccoonClaw weather-advisor`
+
+### wechat-ui-sender
+
+- **说明**：通过桌面微信界面自动发送消息，适合无官方 API 时的消息触达。
+
+## 参考资料
+
+* https://github.com/ComposioHQ/awesome-codex-skills
+* https://github.com/anthropics/skills
+* [TRAE 用户都在用哪些 Skills](https://mp.weixin.qq.com/s/fSKD92UFm2diFN4UYgqgSQ?scene=1&click_id=4)
