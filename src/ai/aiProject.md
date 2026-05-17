@@ -26,6 +26,22 @@ OpenDeepWiki是一款基于 .NET 10 和 AgentFramework 构建的 AI 驱动代码
 
 在线演示：https://koala.token-ai.cn/
 
+### CodeGraph
+
+为 Claude Code 提供代码库全局索引的 MCP 工具，适合处理大代码库和做重构的开发者，省时间也省 token。
+
+安装配置只需三步：
+
+1. 执行安装命令：`npx @colbymchenry/codegraph`，交互式安装程序会自动完成全局安装、配置 Claude Code 的 MCP 服务、设置权限等操作
+2. 重启 Claude Code，加载 MCP 服务
+3. 进入目标项目目录，执行初始化命令：`codegraph init -i`
+
+初始化完成后，Claude Code 检测到项目下的 `.codegraph` 目录，会自动调用 CodeGraph 的工具完成代码探索，不需要额外给 AI 发指令。
+
+> 注意：目前官方只做了 Claude Code 的适配，暂未兼容其他 AI 编码工具。如果索引速度慢，可能是使用了 WASM 版本的 SQLite（比原生版本低 5-10 倍），安装对应系统的 C 编译工具后重新编译 better-sqlite3 即可切换到原生后端，大幅提升索引速度。
+
+开源地址：https://github.com/colbymchenry/codegraph
+
 ## 网站设计
 
 ### readdy
