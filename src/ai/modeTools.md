@@ -13,10 +13,6 @@ tag:
   - 大模型
   - 工具
 ---
-## 应用
-
-1、ollama部署大模型，提供了cli命令行和api，还可以使用maxkb作为用户界面进行使用。
-
 ## Ollama
 
 Ollama是一款开源的大模型管理工具，它允许用户在本地便捷地运行多种大型开源模型，包括清华大学的ChatGLM、阿里的千问以及Meta的llama等。目前，Ollama兼容macOS、Linux和Windows三大主流操作系统。
@@ -307,4 +303,88 @@ services:
 官方文档：[https://enterprise-docs.dify.ai/zh-cn/introduction](https://enterprise-docs.dify.ai/zh-cn/introduction)
 
 [Helm文件配置](https://enterprise-docs.dify.ai/zh-cn/deployment/advanced-configuration/dify-helm-chart) [Dify文件上传](https://personel-zhouxinle888-a66353926f9185cff28f2bd374a5c3a9dd89d5206.gitlab.io/dify/dify-20.html)
+
+## Cursor
+
+[Cursor生成的UI太丑？四种方法减少UI拉扯](https://mp.weixin.qq.com/s/0yY6N5M4vulBS46y0MuKKg)
+
+## Claude Code
+
+参考资料：https://www.yuque.com/xiaoyou-nwu1w/ooi105/bwakf9w86vzuoace
+
+### 使用技巧
+
+```shell
+# 增加思考
+提示词 + ultra think 让 Claude 全自动美化
+
+# 通过#来设置记忆
+```
+
+#### 核心文件
+
+```
+○ 新建 claude.md → 项目记忆规则
+○ 新建 todo.md → 待办任务清单
+
+在 claude.md 设定两条规矩
+  ○ 所有代办需写入 todo.md，完成后打勾。
+  ○ 使用 Task 工具创建并行 子代理 提升开发效率。
+```
+
+#### 网页设计
+
+```
+● 方法一：Claude 盲盒设计
+  ○ 提示词 + ultra think 让 Claude 全自动美化
+  ○ 随机生成配色、图标、伪导航，效果不可预测
+● 方法二：截图复刻
+  ○ 拖入参考网站的截图
+  ○ 指令：只改样式与布局，功能不变
+  ○ 输出深色紫主题，但局部需手动打磨
+● 方法三：tweakcn CSS 主题：https://tweakcn.com/
+  ○ 在 tweakcn 挑选主题 → Copy CSS + 截图交给 Claude
+  ○ 快速套用高质量样式，弹窗等局部需二次调整
+● 方法四：Readdy AI 设计（推荐、收费）
+  ○ Claude 生成精简需求文档 → 粘贴到 Readdy
+  ○ Readdy AI 生成专业深色界面，可用 Selector 逐块微调
+  ○ 下载前端代码并与后端融合，最终效果专业美观
+```
+
+### 安装
+
+```shell
+# 首先安装nodejs，然后安装这个
+npm i -g @anthropic-ai/claude-code@latest --registry=https://registry.npmmirror.com
+
+# vscode的话就安装插件
+Claude Code for VS Code
+
+# 升级
+claude update
+```
+
+其他资料文档：https://docs.88code.org/ClaudeCode/Windows.html
+
+强制设置环境变量(用户级别)
+
+```sh
+# 设置用户级环境变量（永久生效）
+[System.Environment]::SetEnvironmentVariable("ANTHROPIC_BASE_URL", "https://open.bigmodel.cn/api/anthropic", [System.EnvironmentVariableTarget]::User)
+[System.Environment]::SetEnvironmentVariable("ANTHROPIC_AUTH_TOKEN", "xxx", [System.EnvironmentVariableTarget]::User)
+
+
+# 新开一个窗口查看
+echo $env:ANTHROPIC_BASE_URL
+```
+
+## Codex
+
+### 安装
+
+```shell
+npm i -g @openai/codex --registry=https://registry.npmmirror.com
+
+codex --version
+```
 

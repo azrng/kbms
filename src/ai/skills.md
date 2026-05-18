@@ -195,6 +195,10 @@ finishing-a-development-branch
 
 - **说明**：通过桌面微信界面自动发送消息，适合无官方 API 时的消息触达。
 
+## Skills 商城
+
+* skillsmp：https://skillsmp.com/zh
+
 ## 参考资料
 
 * https://github.com/ComposioHQ/awesome-codex-skills

@@ -28,30 +28,6 @@ tag:
 
 ```
 
-## 本地测试的环境变量配置
-
-```shell
-# c#中读取使用
-LLM:APIURL
-LLM:APIKEY
-
-# 其他语言读取
-ASPNETCORE_LLM__APIURL
-ASPNETCORE_LLM__APIKEY
-
-# 设置环境变量
-[Environment]::SetEnvironmentVariable("ASPNETCORE_LLM__APIURL", "https://open.bigmodel.cn/api/paas/v4/", "User")
-[Environment]::SetEnvironmentVariable("ASPNETCORE_LLM__APIKEY", "xxxx", "User")
-
-
-# 测试是否设置成功(新开窗口测试)
-Get-ChildItem Env:ASPNETCORE_LLM__APIURL
-
-
-# 移除环境变量
-[Environment]::SetEnvironmentVariable("ASPNETCORE_LLM__APIURL", $null, "User")
-```
-
 ## Microsoft.Extensions.AI
 
 它为在 .NET 应用程序中使用 LLM 提供了一个统一的接口。 它抽象出不同 LLM 实现的复杂性。 与 OpenAI 兼容的模型或终端节点提供 AI 抽象之间切换，而无需更改应用程序代码。

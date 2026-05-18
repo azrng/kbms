@@ -1,5 +1,5 @@
 ---
-title: 大模型提示词
+title: 文本提示词
 lang: zh-CN
 date: 2025-01-01
 publish: true
