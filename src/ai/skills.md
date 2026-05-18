@@ -12,9 +12,9 @@ tag:
   - 辅助
 ---
 
-# Skills 分类说明
+## Skills 商城
 
-本文整理常用 skills 的用途，并按使用场景分类，方便快速查找。每个 skill 的说明都控制在 100 字以内。
+* skillsmp：https://skillsmp.com/zh
 
 ## Superpowers 详解
 
@@ -194,10 +194,6 @@ finishing-a-development-branch
 ### wechat-ui-sender
 
 - **说明**：通过桌面微信界面自动发送消息，适合无官方 API 时的消息触达。
-
-## Skills 商城
-
-* skillsmp：https://skillsmp.com/zh
 
 ## 参考资料
 

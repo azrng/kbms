@@ -25,9 +25,7 @@ MCP 官方文档：https://modelcontextprotocol.io/introduction
 
 
 
-MCP 之后又一 AI Agent 协议刷屏了：AG-UI 协议架构设计剖析：https://mp.weixin.qq.com/s/69WNlIh2E6kr6BiSRFMpuA
 
-模型上下文协议（MCP）：基于Python的端到端实践教程：https://mp.weixin.qq.com/s/5kaMv46SOTxvuWe8itq6kQ
 
 ## Mcp商店
 
@@ -174,3 +172,9 @@ claude mcp add cloudflare-bindings https://bindings.mcp.cloudflare.com/sse --tra
 ```
 
 可以参考这个：https://www.yuque.com/xiaoyou-nwu1w/ooi105/vl8z9ff4espztcks
+
+## 资料
+
+MCP 之后又一 AI Agent 协议刷屏了：AG-UI 协议架构设计剖析：https://mp.weixin.qq.com/s/69WNlIh2E6kr6BiSRFMpuA
+
+模型上下文协议（MCP）：基于Python的端到端实践教程：https://mp.weixin.qq.com/s/5kaMv46SOTxvuWe8itq6kQ
