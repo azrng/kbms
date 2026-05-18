@@ -80,17 +80,30 @@ var memoryProvider = new ChatHistoryMemoryProvider(chatHistoryProvider);
 | Mem0 服务 | 第三方记忆服务集成 |
 | Foundry 记忆 | Microsoft Foundry 记忆服务 |
 | 有界对话历史 | 带溢出控制的对话历史 |
+| FileMemoryProvider | 基于文件的会话记忆（v1.6.1 新增） |
 
 ### Mem0 记忆服务
 
 ```xml
-<PackageReference Include="Microsoft.Agents.AI.Mem0" Version="1.1.0" />
+<PackageReference Include="Microsoft.Agents.AI.Mem0" Version="1.6.1" />
 ```
 
 ```csharp
 using Microsoft.Agents.AI.Mem0;
 
 // 集成 Mem0 记忆服务
+```
+
+### FileMemoryProvider（v1.6.1 新增）
+
+Harness 内置的基于文件的会话记忆提供者。
+
+```csharp
+using Microsoft.Agents.AI.Harness;
+
+// Harness 自动集成 FileMemoryProvider
+// 基于文件系统存储会话记忆
+// 支持跨请求持久化
 ```
 
 ### 自定义记忆提供者
@@ -114,7 +127,7 @@ public class RedisMemoryProvider : AIContextProvider
 
 ## RAG（检索增强生成）
 
-框架提供 5 种 RAG 模式的示例。
+框架提供多种 RAG 模式的示例。
 
 ### 基础文本 RAG
 
@@ -156,6 +169,14 @@ public class CustomRagProvider : AIContextProvider
 // Microsoft Foundry 内置向量存储
 ```
 
+### Foundry Memory Search（v1.6.1 新增）
+
+非托管 Agent 也可通过 Foundry Toolbox MCP 使用 Foundry 记忆搜索。
+
+```csharp
+// 通过 Foundry Toolbox MCP 访问 Foundry Memory Search
+```
+
 ### Neo4j GraphRAG
 
 ```csharp
@@ -175,6 +196,25 @@ var provider = new TextSearchProvider(
 );
 ```
 
+## 压缩管道（Compaction Pipeline）
+
+v1.6.1 大幅增强压缩管道，管理长对话的 token 消耗。
+
+### 压缩策略
+
+| 策略 | 说明 |
+| --- | --- |
+| 工具结果压缩 | 压缩工具返回的大结果 |
+| 摘要（Summarization） | 用 AI 生成对话摘要 |
+| 滑动窗口（Sliding Window） | 保留最近 N 条消息 |
+| 截断（Truncation） | 截断过长的消息 |
+| 聊天缩减（Chat Reduction） | 智能裁剪对话历史 |
+
+```csharp
+// 配置压缩管道
+// 多策略组合使用，自动在 token 接近上限时触发
+```
+
 ## 记忆与 RAG 架构图
 
 ```
@@ -182,10 +222,22 @@ var provider = new TextSearchProvider(
     ↓
 AIContextProvider.InvokingAsync()
     ├── 注入记忆（Memory Provider）
+    │   ├── ChatHistoryMemoryProvider
+    │   ├── FileMemoryProvider
+    │   └── Mem0 服务
     ├── 注入检索结果（RAG Provider）
+    │   ├── TextSearchProvider
+    │   ├── VectorStore
+    │   └── GraphRAG
     └── 注入额外上下文
     ↓
 ChatClientAgent.RunAsync()
+    ↓
+压缩管道（Compaction Pipeline）
+    ├── 工具结果压缩
+    ├── 摘要压缩
+    ├── 滑动窗口
+    └── 截断
     ↓
 AIContextProvider.InvokedAsync()
     ├── 保存记忆

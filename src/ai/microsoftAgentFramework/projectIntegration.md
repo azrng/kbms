@@ -173,6 +173,93 @@ public class MyService(
 }
 ```
 
+## OAuth 授权集成（v1.6.1 新增）
+
+基于 OAuth 2.0 scope 的 Agent 和工具级授权。
+
+```csharp
+using Microsoft.AspNetCore.Authorization;
+
+[ApiController]
+[Route("api/[controller]")]
+[Authorize(Policy = "agent.chat")]  // 端点级授权
+public class AgentController : ControllerBase
+{
+    private readonly AIAgent _agent;
+
+    [HttpPost("chat")]
+    public async IAsyncEnumerable<string> Chat([FromBody] ChatRequest request)
+    {
+        await foreach (var chunk in _agent.RunStreamingAsync(request.Message))
+        {
+            yield return chunk;
+        }
+    }
+}
+
+// 工具级授权
+[Description("审批费用报销")]
+[Authorize(Policy = "expenses.approve")]  // 需要审批权限
+public bool ApproveExpense([Description("报销ID")] string expenseId)
+{
+    return true;
+}
+
+// 查看费用只需查看权限
+[Description("查看费用列表")]
+[Authorize(Policy = "expenses.view")]
+public string ListExpenses()
+{
+    return "费用列表...";
+}
+```
+
+OAuth 配置支持 Keycloak（开发环境）和 Microsoft Entra ID（生产环境）。
+
+## M365 Agent 集成（v1.6.1 新增）
+
+将 Agent 部署到 Microsoft Teams 和 Copilot。
+
+```csharp
+// ASP.NET Core 托管 M365 Agent
+// - 支持多轮对话
+// - Adaptive Cards 富交互响应
+// - devtunnels 本地调试
+// - Azure Bot Service 部署
+// - Agents Playground 测试
+```
+
+## OpenTelemetry + Aspire 监控集成（v1.6.1 新增）
+
+```csharp
+// Program.cs
+var builder = WebApplication.CreateBuilder(args);
+
+// 添加 OpenTelemetry
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracing => tracing
+        .AddSource("Microsoft.Agents.AI")
+        .AddOtlpExporter())
+    .WithMetrics(metrics => metrics
+        .AddMeter("Microsoft.Agents.AI")
+        .AddOtlpExporter());
+
+// 添加 Agent 并启用遥测
+builder.Services.AddChatClient(chatClient)
+    .UseOpenTelemetry()
+    .UseLogging();
+
+// 或通过 AIAgentBuilder
+var agent = new AIAgentBuilder()
+    .UseOpenTelemetry()
+    .Build(chatClientAgent);
+```
+
+监控选项：
+- **Aspire Dashboard**：本地开发实时查看追踪、指标
+- **Grafana**：自定义仪表盘（Agent Overview、Workflow Overview）
+- **Application Insights**：Azure 生产环境监控
+
 ## 错误处理最佳实践
 
 ```csharp
@@ -204,4 +291,6 @@ public async IAsyncEnumerable<string> SafeAnalyzeStreamAsync(string input)
 - 对于大批量处理，考虑使用后台响应（Background Responses）
 - 合理设置 `MaxOutputTokens` 和 `Temperature`
 - 使用 `ChatHistoryProvider` 管理对话历史，避免无限增长
+- 启用压缩管道（Compaction Pipeline）管理 token 消耗
 - 对于重复请求，考虑实现缓存层
+- 生产环境启用 `RequirePerServiceCallChatHistoryPersistence` 支持崩溃恢复

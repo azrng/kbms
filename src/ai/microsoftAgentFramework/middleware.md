@@ -48,6 +48,19 @@ var agent = new AIAgentBuilder()
 // 执行顺序：Logging -> Retry -> Caching -> ChatClientAgent
 ```
 
+## 内置中间件扩展（v1.6.1）
+
+```csharp
+var agent = new AIAgentBuilder()
+    .UseOpenTelemetry()        // OpenTelemetry 遥测（分布式追踪、指标、日志）
+    .UseToolApproval()         // 工具审批（"Don't ask again" 规则）
+    .UseAIContextProviders(     // 上下文注入
+        new TimeContextProvider(),
+        new CustomRagProvider())
+    .UseLogging(loggerFactory) // 日志记录
+    .Build(chatClientAgent);
+```
+
 ## 自定义中间件
 
 ```csharp
@@ -103,6 +116,7 @@ public class LoggingAgent : DelegatingAIAgent
 | `LoggingAgent` | 日志记录中间件 |
 | `OpenTelemetryAgent` | OpenTelemetry 遥测 |
 | `FunctionInvokingAgent` | 函数调用处理 |
+| `ToolApprovalAgent` | 工具审批（v1.6.1 新增） |
 
 ## IChatClient 中间件
 
@@ -146,8 +160,12 @@ builder.Services.AddChatClient(chatClient)
 
 ## OpenTelemetry
 
+v1.6.1 提供了完整的 OpenTelemetry 集成，支持分布式追踪、指标和日志。
+
+### 基础使用
+
 ```csharp
-// 添加 OpenTelemetry 遥测
+// 通过 AIAgentBuilder
 var agent = new AIAgentBuilder()
     .UseOpenTelemetry()
     .Build(chatClientAgent);
@@ -155,6 +173,29 @@ var agent = new AIAgentBuilder()
 // 通过 DI
 builder.Services.AddChatClient(chatClient)
     .UseOpenTelemetry();
+```
+
+### Aspire Dashboard 集成
+
+```csharp
+// 使用 .NET Aspire Dashboard 实时查看 Agent 遥测
+// Docker 部署 Aspire Dashboard
+// PowerShell 自动化脚本启动 demo
+```
+
+### Grafana 仪表盘
+
+```csharp
+// 自定义 Grafana 仪表盘
+// Agent Overview 面板
+// Workflow Overview 面板
+```
+
+### Application Insights
+
+```csharp
+// 生产环境使用 Azure Monitor Application Insights
+// 自动收集追踪、指标和日志
 ```
 
 ## 重试中间件
@@ -207,5 +248,31 @@ var agent = new AIAgentBuilder()
 框架提供 `Microsoft.Agents.AI.DevUI` 包，提供交互式 Web 调试界面。
 
 ```xml
-<PackageReference Include="Microsoft.Agents.AI.DevUI" Version="1.1.0" />
+<PackageReference Include="Microsoft.Agents.AI.DevUI" Version="1.6.1" />
 ```
+
+### DevUI + Aspire 集成（v1.6.1 新增）
+
+```xml
+<PackageReference Include="Aspire.Hosting.AgentFramework.DevUI" Version="1.6.1" />
+```
+
+```csharp
+// 在 Aspire AppHost 中注册 DevUI
+var builder = DistributedApplication.CreateBuilder(args);
+
+// 添加多个 Agent 服务
+var agent1 = builder.AddProject<Projects.AgentService>("agent1")
+    .WithAgentService("WriterAgent");
+var agent2 = builder.AddProject<Projects.AgentService>("agent2")
+    .WithAgentService("EditorAgent");
+
+// DevUI 自动发现所有注册的 Agent
+builder.AddAgentFrameworkDevUI("devui");
+```
+
+DevUI 特性：
+- 自动发现注册的 Agent
+- 实时可视化 Agent 执行
+- 多 Agent 统一调试界面
+- 支持 Azure AI Foundry 集成

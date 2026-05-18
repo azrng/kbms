@@ -36,7 +36,7 @@ public abstract class AIAgent
     // 执行方法（4 个重载）
     public abstract Task<AgentResponse> RunAsync(string message, AgentSession? session = null, AgentRunOptions? options = null, CancellationToken cancellationToken = default);
     public abstract Task<AgentResponse> RunAsync(ChatMessage message, AgentSession? session = null, AgentRunOptions? options = null, CancellationToken cancellationToken = default);
-    public abstract Task<AgentResponse> RunAsync(IList<ChatMessage> messages, AgentSession? session = null, AgentRunOptions? options = null, CancellationToken cancellationToken = default);
+    public abstract Task<AgentResponse> RunAsync(IEnumerable<ChatMessage> messages, AgentSession? session = null, AgentRunOptions? options = null, CancellationToken cancellationToken = default);
     public abstract Task<AgentResponse> RunAsync(AgentSession? session = null, AgentRunOptions? options = null, CancellationToken cancellationToken = default);
 
     // 流式执行
@@ -58,6 +58,7 @@ public abstract class AIAgent
 | `A2AAgent` | Agent-to-Agent 协议 |
 | `CopilotStudioAgent` | Copilot Studio 集成 |
 | `GitHubCopilotAgent` | GitHub Copilot 集成 |
+| `HarnessAgent` | 一站式预配置 Agent（v1.6.1 新增） |
 
 ## ChatClientAgent
 
@@ -106,7 +107,18 @@ new ChatClientAgentOptions
         Tools = [AIFunctionFactory.Create(GetWeather)]
     },
     LoggerFactory = loggerFactory,
-    Services = new Dictionary<Type, object>()
+    Services = new Dictionary<Type, object>(),
+
+    // v1.6.1 新增：每次服务调用持久化（崩溃恢复）
+    RequirePerServiceCallChatHistoryPersistence = true,
+
+    // v1.6.1 新增：消息注入（运行中动态注入消息）
+    EnableMessageInjection = true,
+
+    // ChatHistoryProvider 冲突处理
+    ClearOnChatHistoryProviderConflict = true,
+    WarnOnChatHistoryProviderConflict = true,
+    ThrowOnChatHistoryProviderConflict = true
 }
 ```
 
@@ -160,9 +172,13 @@ public abstract class DelegatingAIAgent : AIAgent
 ```
 
 内置的 `DelegatingAIAgent` 实现：
-- `LoggingAgent` - 日志记录
-- `OpenTelemetryAgent` - 遥测
-- `FunctionInvokingAgent` - 函数调用
+
+| 实现 | 说明 |
+| --- | --- |
+| `LoggingAgent` | 日志记录中间件 |
+| `OpenTelemetryAgent` | OpenTelemetry 遥测 |
+| `FunctionInvokingAgent` | 函数调用处理 |
+| `ToolApprovalAgent` | 工具审批（"Don't ask again" 规则） |
 
 ## AIAgentBuilder（管道构建器）
 
@@ -185,6 +201,19 @@ var agent = new AIAgentBuilder()
     .Build(chatClientAgent);
 ```
 
+### 内置中间件扩展
+
+```csharp
+var agent = new AIAgentBuilder()
+    .UseOpenTelemetry()        // OpenTelemetry 遥测
+    .UseToolApproval()         // 工具审批（支持 "Don't ask again"）
+    .UseAIContextProviders(     // 上下文注入
+        new TimeContextProvider(),
+        new CustomRagProvider())
+    .UseLogging(loggerFactory) // 日志记录
+    .Build(chatClientAgent);
+```
+
 ## 关键命名空间
 
 ```csharp
@@ -196,6 +225,12 @@ using Microsoft.Agents.AI;  // ChatClientAgent, AIAgentBuilder
 
 // Extensions.AI（统一抽象层）
 using Microsoft.Extensions.AI;  // IChatClient, ChatMessage, ChatRole, ChatOptions
+
+// Harness 一站式 Agent
+using Microsoft.Agents.AI.Harness;  // HarnessAgent
+
+// Hyperlight 沙箱执行
+using Microsoft.Agents.AI.Hyperlight;  // HyperlightCodeActProvider
 
 // OpenAI SDK
 using OpenAI;

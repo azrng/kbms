@@ -19,7 +19,7 @@ tag:
 `Microsoft.Agents.AI.Workflows` 提供了强大的工作流引擎，用于编排复杂的多步骤 AI 工作流。
 
 ```xml
-<PackageReference Include="Microsoft.Agents.AI.Workflows" Version="1.1.0" />
+<PackageReference Include="Microsoft.Agents.AI.Workflows" Version="1.6.1" />
 ```
 
 ## WorkflowBuilder
@@ -68,6 +68,8 @@ await foreach (var update in workflow.RunStreamingAsync(input))
 
 ## 并发执行（Fan-out/Fan-in）
 
+### 基本并发
+
 ```csharp
 var workflow = new WorkflowBuilder()
     .AddExecutor("start", ...)
@@ -81,6 +83,18 @@ var workflow = new WorkflowBuilder()
     .AddEdge("taskA", "merge")
     .AddEdge("taskB", "merge")
     .AddEdge("taskC", "merge")
+    .Build();
+```
+
+### Fan-out/Fan-in Edge（v1.6.1 新增）
+
+```csharp
+var workflow = new WorkflowBuilder()
+    .AddExecutor("start", ...)
+    .AddExecutor("process", ...)  // 多个实例并发处理
+    .AddExecutor("merge", ...)
+    .AddFanOutEdge("start", "process")       // 扇出：分发到多个实例
+    .AddFanInBarrierEdge("process", "merge") // 扇入：等待所有完成后合并
     .Build();
 ```
 
@@ -109,17 +123,68 @@ var workflow = new WorkflowBuilder()
     .Build();
 ```
 
-## Switch-Case 模式
+## Switch-Case 模式（v1.6.1 新增）
 
 ```csharp
-.AddConditionalEdge("router", result => result.Category,
-    new Dictionary<string, string>
-    {
-        ["技术问题"] = "techAgent",
-        ["销售咨询"] = "salesAgent",
-        ["投诉"] = "supportAgent"
-    })
+var workflow = new WorkflowBuilder()
+    .AddExecutor("router", ...)
+    .AddExecutor("techAgent", ...)
+    .AddExecutor("salesAgent", ...)
+    .AddExecutor("supportAgent", ...)
+    .AddSwitch("router", result => result.Category,
+        new Dictionary<string, string>
+        {
+            ["技术问题"] = "techAgent",
+            ["销售咨询"] = "salesAgent",
+            ["投诉"] = "supportAgent"
+        })
+    .Build();
 ```
+
+## Chain 模式（v1.6.1 新增）
+
+```csharp
+// 快速构建顺序执行链
+var workflow = new WorkflowBuilder()
+    .AddChain("step1", "step2", "step3", "step4")
+    .Build();
+```
+
+## 消息转发（v1.6.1 新增）
+
+```csharp
+// 转发所有消息
+.ForwardMessage("step1", "step2")
+
+// 转发除指定类型外的所有消息
+.ForwardExcept("step1", "step2", typeof(ErrorMessage))
+
+// 外部系统调用
+.AddExternalCall("step1", "http://api.example.com/process")
+```
+
+## 混合工作流（Agent + Executor）
+
+v1.6.1 新增适配器模式，允许 Agent 和 Executor 在同一工作流中混合使用。
+
+```csharp
+// 使用适配器将 Agent 的 ChatMessage 输出转换为 Executor 需要的 string
+var workflow = new WorkflowBuilder()
+    .AddAgentExecutor("aiAgent", myAgent, "分析以下内容")
+    .AddExecutor("postProcess", async (context, ct) =>
+    {
+        // 类型转换适配器
+        var input = context.State["aiAgent_output"]?.ToString();
+        return new ExecutorResult { Output = $"处理后的: {input}" };
+    })
+    .AddEdge("aiAgent", "postProcess")
+    .Build();
+```
+
+混合工作流示例：
+- 内容审核管道（jailbreak 检测 + AI 分析）
+- 安全筛查 + 分类处理
+- 异构组件的顺序处理
 
 ## 检查点（Checkpointing）
 
@@ -158,6 +223,26 @@ var mainWorkflow = new WorkflowBuilder()
     .Build();
 ```
 
+## 可视化（v1.6.1 新增）
+
+框架支持工作流可视化，生成流程图。
+
+```csharp
+// Mermaid 格式（可在浏览器中查看）
+string mermaid = workflow.ToMermaidString();
+Console.WriteLine(mermaid);
+// 可粘贴到 https://mermaid.live 编辑器查看
+
+// DOT/Graphviz 格式
+string dot = workflow.ToDotString();
+Console.WriteLine(dot);
+// 可使用 Graphviz 工具渲染
+```
+
+支持的可视化格式：
+- **Mermaid**：适合 Markdown 文档、Mermaid Live Editor
+- **DOT**：适合 Graphviz 渲染、复杂图形
+
 ## Group Chat
 
 ```csharp
@@ -191,9 +276,20 @@ var workflow = new WorkflowBuilder()
     .Build();
 ```
 
-## 可视化
+## Writer-Critic 工作流
 
-框架支持工作流可视化，生成流程图。
+v1.6.1 新增 Writer-Critic 工作流完整示例，支持迭代优化和质量关卡。
+
+```csharp
+// Writer 生成内容 → Critic 审查 → 质量关卡检查
+// 可设置安全限制（最大迭代次数）
+var workflow = new WorkflowBuilder()
+    .AddAgentExecutor("writer", writerAgent, "写一篇文章关于 {topic}")
+    .AddAgentExecutor("critic", criticAgent, "审查并改进：{input}")
+    .AddEdge("writer", "critic")
+    // 迭代循环直到满足质量标准
+    .Build();
+```
 
 ## 工作流模式一览
 
@@ -208,3 +304,4 @@ var workflow = new WorkflowBuilder()
 | 子工作流 | 工作流嵌套 |
 | 群聊（Group Chat） | 多 Agent 协作 |
 | 交接（Handoff） | Agent 间任务交接 |
+| 混合（Mixed） | Agent + Executor 混用 |

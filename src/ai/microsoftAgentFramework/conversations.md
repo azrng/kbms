@@ -164,3 +164,24 @@ await foreach (var update in agent.RunStreamingAsync(
 - 使用 `SerializeSessionAsync` / `DeserializeSessionAsync` 持久化会话
 - 定期清理过期的会话状态
 - 生产环境使用 `ChatHistoryProvider` 而非内存存储
+
+## Per-Service-Call 持久化（崩溃恢复）
+
+v1.6.1 新增每次服务调用级别的聊天历史持久化，支持崩溃后恢复。
+
+```csharp
+ChatClientAgent agent = new ChatClientAgent(
+    chatClient,
+    new ChatClientAgentOptions
+    {
+        Name = "MyAgent",
+        RequirePerServiceCallChatHistoryPersistence = true, // 启用每次调用持久化
+        ChatOptions = new ChatOptions
+        {
+            Instructions = "你是一个助手..."
+        }
+    }
+);
+
+// 如果服务在处理过程中崩溃，下次启动时可从上次检查点恢复
+```
