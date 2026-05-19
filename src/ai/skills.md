@@ -151,6 +151,13 @@ finishing-a-development-branch
 - **说明**：用于设计和编写新 skill，适合沉淀专用工作流、知识和工具接入。
 - **来源**：GitHub：https://github.com/anthropics/skills/tree/main/skills/skill-creator
 
+### claude-code-setup
+
+- **说明**：分析项目代码库并推荐针对性的 Claude Code 自动化配置，覆盖 MCP Servers、Skills、Hooks、Subagents 和 Slash Commands 五大类别，每个类别推荐 1-2 个最适用的方案。该插件为只读分析，不修改任何文件。
+- **安装**：`claude plugin install claude-code-setup@claude-plugins-official`
+- **触发方式**：`recommend automations for this project` / `help me set up Claude Code` / `what hooks should I use?`
+- **来源**：GitHub：https://github.com/anthropics/claude-plugins-official/tree/main/plugins/claude-code-setup
+
 ### find-skills
 
 - **说明**：用于发现、比较和安装 skills，适合不知道该用哪个 skill 时先检索。
