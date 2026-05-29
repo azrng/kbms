@@ -97,25 +97,43 @@ finishing-a-development-branch
 
 ### taste-skill
 
-- **说明**：可移植的 Agent 设计技能集，提升 AI 生成界面的布局、排版、动效和间距质量，告别模板化 UI。包含代码实现类和图片生成类两大类技能，可搭配 ChatGPT Images 等图片生成器使用，再交给 Codex / Cursor / Claude Code 实现。
+- **说明**：可移植的 Agent 设计技能集，核心目标是让 AI 生成的前端页面告别"AI 味"（廉价渐变、紫蓝发光、到处圆角卡片），转向 Apple / Linear / Stripe / Vercel 级别的高级产品质感。本质是系统级 Prompt + 设计规则 + 工作流约束，持续校正模型审美。包含代码实现类和图片生成类两大类技能，可搭配 ChatGPT Images 等图片生成器使用，再交给 Codex / Cursor / Claude Code 实现。
 - **安装**：`npx skills add https://github.com/Leonxlnx/taste-skill`
 - **单项安装**：`npx skills add https://github.com/Leonxlnx/taste-skill --skill "install-name"`
 - **来源**：GitHub：https://github.com/Leonxlnx/taste-skill
 
+#### 安装流程
+
+1. 执行 `npx skills add https://github.com/Leonxlnx/taste-skill`，自动 clone 仓库并检测到 12 个 skills
+2. 选择安装目标时推荐选 **Universal (.agents/skills)**，会自动创建 `.agents/skills/` 目录
+3. 作用域选择 **Project**（当前项目独立管理，可跟随 Git 同步，团队协作方便）
+4. 提示 `Install the find-skills skill?` 时选 **Yes**，让 AI 自动发现并调用 Skill
+
+安装后目录结构：
+
+```
+project/
+├─ .agents/
+│  └─ skills/
+│     ├─ design-taste-frontend/
+│     ├─ minimalist-ui/
+│     └─ gpt-taste/
+```
+
 #### 代码实现类技能
 
-| 安装名 | 说明 |
-| --- | --- |
-| `design-taste-frontend` | 默认技能（v2 实验版），读取需求推断设计语言，调节 VARIANCE / MOTION / DENSITY 三个旋钮，含 GSAP 动效骨架、重设计审计协议和预检流程。 |
-| `design-taste-frontend-v1` | v1 原版保留，仅在 v2 不兼容时使用。 |
-| `gpt-taste` | GPT / Codex 专用严格变体，更高布局方差、更强 GSAP 方向性、激进反模板规则。 |
-| `image-to-code` | 图片优先工作流：生成站点参考图 → 分析 → 实现前端代码。 |
-| `redesign-existing-projects` | 改造现有项目：先审计 UI，再修复布局、间距、层级和样式。 |
-| `high-end-visual-design` | 高端精致风格，柔和对比、充足留白、高级字体、弹性动效。 |
-| `full-output-enforcement` | 强制完整输出，防止模型输出半成品代码或占位注释。 |
-| `minimalist-ui` | 极简编辑器风格（Notion / Linear 质感），克制配色、清晰结构。 |
-| `industrial-brutalist-ui` | 瑞士排版、高对比、实验性布局的工业粗野主义风格。 |
-| `stitch-design-taste` | Google Stitch 兼容规则，支持导出 DESIGN.md 格式。 |
+| 安装名 | 风格定位 | 说明 |
+| --- | --- | --- |
+| `design-taste-frontend` | Apple / Linear / Stripe | 默认核心技能（v2 实验版），读取需求推断设计语言，调节 VARIANCE / MOTION / DENSITY 三个旋钮，含 GSAP 动效骨架、重设计审计协议和预检流程。适合 SaaS 官网、Dashboard、AI 产品。 |
+| `design-taste-frontend-v1` | 同上 | v1 原版保留，仅在 v2 不兼容时使用。 |
+| `gpt-taste` | Awwwards / 电影感 | GPT / Codex 专用严格变体，更高布局方差、更强 GSAP 方向性、激进反模板规则。适合高级展示页、未来感官网。 |
+| `image-to-code` | 跟随设计稿 | 图片优先工作流：上传设计图 → AI 分析 → 自动生成 React + Tailwind 响应式布局。 |
+| `redesign-existing-projects` | 诊断式改造 | 改造现有项目：先审计 UI，再修复布局、间距、层级和样式。适合"帮我把这个页面改高级"类需求。 |
+| `high-end-visual-design` | 苹果发布会风 | 高端精致风格，柔和对比、充足留白、高级字体、弹性动效。适合科技公司首页、高级 Hero Section。 |
+| `full-output-enforcement` | 兜底保障 | 强制完整输出，防止 AI 偷懒（`remaining code stays same`、`omitted for brevity` 等行为）。建议与其他 Skill 搭配使用。 |
+| `minimalist-ui` | Notion / Linear | 极简编辑器风格，克制配色、留白、清晰信息层级。适合 Apple 风、高级极简 UI。 |
+| `industrial-brutalist-ui` | 瑞士粗野主义 | 大字体、强对比、实验性布局、艺术感。适合艺术展示、实验性项目。 |
+| `stitch-design-taste` | Google Stitch | Google Stitch 兼容规则，支持导出 DESIGN.md 格式。 |
 
 #### 图片生成类技能
 
@@ -125,6 +143,8 @@ finishing-a-development-branch
 | `imagegen-frontend-mobile` | 移动端屏幕与流程：iOS / Android / 跨平台，Mockup 与连贯套图。 |
 | `brandkit` | 品牌套件板：Logo 方向、配色、字体、身份应用。 |
 
+> 图片生成类技能产出设计参考图，不产出代码。搭配 ChatGPT Images / Codex image mode 生成渲染图，再交给编码 Agent 实现。
+
 #### 设置参数（taste-skill）
 
 文件顶部有三个 1-10 的调节旋钮：
@@ -132,6 +152,36 @@ finishing-a-development-branch
 - **DESIGN_VARIANCE**：布局实验度（低：居中整洁 → 高：不对称/现代）
 - **MOTION_INTENSITY**：动画深度（低：hover → 高：滚动/磁吸）
 - **VISUAL_DENSITY**：信息密度（低：宽敞 → 高：密集仪表盘）
+
+#### 推荐 Skill 组合
+
+| 场景 | 组合 |
+| --- | --- |
+| 高级 SaaS 风格 | `design-taste-frontend` + `minimalist-ui` + `full-output-enforcement` |
+| Apple 风格 | `minimalist-ui` + `high-end-visual-design` |
+| Awwwards 炫技风格 | `gpt-taste` + `stitch-design-taste` + `high-end-visual-design` |
+| 重构旧项目 | `redesign-existing-projects` |
+
+#### 使用技巧
+
+安装后需要在 Prompt 中明确指定使用的 Skill，否则可能不会自动生效。推荐写法：
+
+```
+使用：
+- design-taste-frontend
+- minimalist-ui
+- full-output-enforcement
+
+创建一个 Apple + Linear 风格 AI SaaS 官网
+要求：
+- 高级感、极简、黑白灰
+- 少 AI 味
+- 高级 typography
+- Framer Motion + Tailwind + shadcn/ui
+- 响应式
+```
+
+特别适合的技术栈：**React / Next.js / Tailwind / shadcn/ui / Framer Motion**。
 
 ## 联网、搜索与数据处理
 
