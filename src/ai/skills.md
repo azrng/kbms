@@ -95,6 +95,44 @@ finishing-a-development-branch
 - **说明**：浏览器自动化，用于在浏览器中打开、导航、检查、截图或测试本地与远程页面。
 - **来源**：GitHub：https://github.com/vercel-labs/agent-browser/tree/main/skills/agent-browser
 
+### taste-skill
+
+- **说明**：可移植的 Agent 设计技能集，提升 AI 生成界面的布局、排版、动效和间距质量，告别模板化 UI。包含代码实现类和图片生成类两大类技能，可搭配 ChatGPT Images 等图片生成器使用，再交给 Codex / Cursor / Claude Code 实现。
+- **安装**：`npx skills add https://github.com/Leonxlnx/taste-skill`
+- **单项安装**：`npx skills add https://github.com/Leonxlnx/taste-skill --skill "install-name"`
+- **来源**：GitHub：https://github.com/Leonxlnx/taste-skill
+
+#### 代码实现类技能
+
+| 安装名 | 说明 |
+| --- | --- |
+| `design-taste-frontend` | 默认技能（v2 实验版），读取需求推断设计语言，调节 VARIANCE / MOTION / DENSITY 三个旋钮，含 GSAP 动效骨架、重设计审计协议和预检流程。 |
+| `design-taste-frontend-v1` | v1 原版保留，仅在 v2 不兼容时使用。 |
+| `gpt-taste` | GPT / Codex 专用严格变体，更高布局方差、更强 GSAP 方向性、激进反模板规则。 |
+| `image-to-code` | 图片优先工作流：生成站点参考图 → 分析 → 实现前端代码。 |
+| `redesign-existing-projects` | 改造现有项目：先审计 UI，再修复布局、间距、层级和样式。 |
+| `high-end-visual-design` | 高端精致风格，柔和对比、充足留白、高级字体、弹性动效。 |
+| `full-output-enforcement` | 强制完整输出，防止模型输出半成品代码或占位注释。 |
+| `minimalist-ui` | 极简编辑器风格（Notion / Linear 质感），克制配色、清晰结构。 |
+| `industrial-brutalist-ui` | 瑞士排版、高对比、实验性布局的工业粗野主义风格。 |
+| `stitch-design-taste` | Google Stitch 兼容规则，支持导出 DESIGN.md 格式。 |
+
+#### 图片生成类技能
+
+| 安装名 | 说明 |
+| --- | --- |
+| `imagegen-frontend-web` | 网站设计稿：Hero、Landing、多区块页面，强调排版和间距。 |
+| `imagegen-frontend-mobile` | 移动端屏幕与流程：iOS / Android / 跨平台，Mockup 与连贯套图。 |
+| `brandkit` | 品牌套件板：Logo 方向、配色、字体、身份应用。 |
+
+#### 设置参数（taste-skill）
+
+文件顶部有三个 1-10 的调节旋钮：
+
+- **DESIGN_VARIANCE**：布局实验度（低：居中整洁 → 高：不对称/现代）
+- **MOTION_INTENSITY**：动画深度（低：hover → 高：滚动/磁吸）
+- **VISUAL_DENSITY**：信息密度（低：宽敞 → 高：密集仪表盘）
+
 ## 联网、搜索与数据处理
 
 ### web-access
