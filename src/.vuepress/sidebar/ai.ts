@@ -12,6 +12,7 @@ export const aiSidebar = [
     "dotNetCall.md",
     "pythonCall.md",
     "aiProject.md",
+    "sse-streaming-spec.md",
     {
         text: "Microsoft Agent Framework",
         prefix: "/ai/microsoftAgentFramework/",
