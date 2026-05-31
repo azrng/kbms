@@ -1015,6 +1015,62 @@ function WidgetRenderer({ widget }: { widget: WidgetEvent }) {
 }
 ```
 
+### 9.4 SSE 缓冲区溢出防护
+
+前端通过 `ReadableStream` 读取 SSE 数据时，会将收到的字节拼接到内存缓冲区中再按 `\n\n` 分割事件。如果后端异常（如发送了超大 JSON、事件之间缺少分隔符、或连接卡死但未关闭），缓冲区会持续增长，最终导致前端内存溢出或页面卡死。
+
+**防护策略**：在流式读取循环中监控缓冲区长度，超过阈值时强制清空并记录告警。
+
+```typescript
+async function consumeStream(
+  response: Response,
+  handlers: EventHandlers
+): Promise<void> {
+  const reader = response.body?.getReader();
+  const decoder = new TextDecoder();
+  if (!reader) throw new Error('No response body');
+
+  let buffer = '';
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const events = buffer.split('\n\n');
+      buffer = events.pop() || '';
+
+      for (const raw of events) {
+        if (!raw.trim()) continue;
+        // ... 解析并派发事件
+      }
+
+      // 缓冲区溢出防护：超过阈值时强制清空
+      if (buffer.length > 20000) {
+        console.warn('[SSE] Buffer overflow, clearing:', buffer.length);
+        buffer = '';
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}
+```
+
+**阈值建议**：
+
+| 场景 | 建议阈值 | 说明 |
+|------|----------|------|
+| 常规对话 | 20 KB | 一般单个事件不会超过此大小 |
+| 含大块工具结果 | 50 KB | 工具返回大量结构化数据时可适当放宽 |
+| 含图片 Base64 | 100 KB | 图片内联传输场景需要更大阈值 |
+
+**注意事项**：
+- 清空缓冲区后，下一轮读取仍会正常拼接新数据，不会丢失后续事件
+- 如果需要更精确的容错，可以在清空前尝试从缓冲区中提取最后一个完整的 `data: {...}` 行
+- 后端也应控制单个事件的大小，避免发送超过 64 KB 的单条事件
+
 ---
 
 ## 10. 错误处理
