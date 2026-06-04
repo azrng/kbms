@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="generator" content="VuePress 2.0.0-rc.28" />
+    <meta name="theme" content="VuePress Theme Hope 2.0.0-rc.106" />
+    <style>
+      :root {
+        --vp-c-bg: #fff;
+      }
+
+      [data-theme="dark"] {
+        --vp-c-bg: #1b1b1f;
+      }
+
+      html,
+      body {
+        background: var(--vp-c-bg);
+      }
+    </style>
+    <script>
+      const userMode = localStorage.getItem("vuepress-theme-hope-scheme");
+      const systemDarkMode =
+        window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+      if (userMode === "dark" || (userMode !== "light" && systemDarkMode)) {
+        document.documentElement.setAttribute("data-theme", "dark");
+      }
+    </script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"Harness Engineering 详解","image":["https://azrng.gitee.io/kbms/kbms/ai/730c3aaa-62df-48ab-ae7c-784bb900128b.jpg","https://azrng.gitee.io/kbms/kbms/ai/f7242e30-48b5-4dc5-9a47-840d163d006b.png","https://azrng.gitee.io/kbms/kbms/ai/1282fdf9-67ad-4228-afe0-f2c303e47cf4.png"],"datePublished":"2026-06-04T00:00:00.000Z","dateModified":"2026-06-04T08:46:24.000Z","author":[{"@type":"Person","name":"圣杰"}]}</script><meta property="og:url" content="https://azrng.gitee.io/kbms/kbms/ai/harness-engineering.html"><meta property="og:site_name" content="知识库"><meta property="og:title" content="Harness Engineering 详解"><meta property="og:description" content="Harness Engineering：智能体工程化的关键概念 封面封面 本文整理自 向 AI 而行 的文章，系统介绍 Harness Engineering 的核心概念和在 MAF 1.4 中的实现。 什么是 Harness Engineering 很多人第一次看到 Harness 这个词，会把它理解成一个新功能，或者一个新的任务编排组件。 这样理解..."><meta property="og:type" content="article"><meta property="og:image" content="https://azrng.gitee.io/kbms/kbms/ai/730c3aaa-62df-48ab-ae7c-784bb900128b.jpg"><meta property="og:locale" content="zh-CN"><meta property="og:updated_time" content="2026-06-04T08:46:24.000Z"><meta property="article:author" content="圣杰"><meta property="article:tag" content="Harness"><meta property="article:tag" content="智能体"><meta property="article:tag" content="MAF"><meta property="article:tag" content=".NET"><meta property="article:tag" content="大模型"><meta property="article:published_time" content="2026-06-04T00:00:00.000Z"><meta property="article:modified_time" content="2026-06-04T08:46:24.000Z"><script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?1f046e495f9c28ef302f30895bda829e";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script><title>Harness Engineering 详解 | 知识库</title><meta name="description" content="Harness Engineering：智能体工程化的关键概念 封面封面 本文整理自 向 AI 而行 的文章，系统介绍 Harness Engineering 的核心概念和在 MAF 1.4 中的实现。 什么是 Harness Engineering 很多人第一次看到 Harness 这个词，会把它理解成一个新功能，或者一个新的任务编排组件。 这样理解...">
+    <link rel="preload" href="/kbms/assets/style-DpKrt0mi.css" as="style"><link rel="stylesheet" href="/kbms/assets/style-DpKrt0mi.css">
+    <link rel="modulepreload" href="/kbms/assets/app-Bu7bOSw-.js"><link rel="modulepreload" href="/kbms/assets/harness-engineering-Bdoq5kD3.js"><link rel="modulepreload" href="/kbms/assets/plugin-vue_export-helper-CDQIAITX.js">
+    
+  </head>
+  <body>
+    <div id="app"><!--[--><!--[--><!--[--><span tabindex="-1"></span><a href="#main-content" class="vp-skip-link sr-only">跳至主要內容</a><!--]--><!----><!--]--><!--[--><!----><!--[--><!--]--><!--]--><!--]--></div>
+    <script type="module" src="/kbms/assets/app-Bu7bOSw-.js" defer></script>
+  </body>
+</html>
