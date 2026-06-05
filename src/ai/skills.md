@@ -87,8 +87,39 @@ finishing-a-development-branch
 
 ### webapp-testing
 
-- **说明**：基于 Playwright 的本地 Web 应用测试工具集，支持前端功能验证、UI 调试、页面截图及浏览器控制台日志采集。
-- **安装**：`npx skillsauth add alter123-zz/RaccoonClaw webapp-testing`
+- **作者**：Anthropics
+- **说明**：webapp-testing 是一个基于 Playwright 的本地 Web 应用测试工具集，支持前端功能验证、UI 调试、页面截图及浏览器控制台日志采集，遵循 "先侦查后执行" 的流程。该技能提供示例与辅助脚本，覆盖静态 HTML 自动化测试、元素定位、日志抓取能力，并可在多服务场景下统一管理服务器生命周期。
+- **来源**：GitHub：https://github.com/anthropics/skills/tree/main/skills/webapp-testing
+
+#### 安装方式
+
+**Claude Code**（通过 plugin 系统安装）：
+
+```shell
+# 1. 注册 Anthropic skills 市场
+/plugin marketplace add anthropics/skills
+
+# 2. 安装 example-skills 插件（包含 webapp-testing）
+/plugin install example-skills@anthropic-agent-skills
+```
+
+**Claude.ai**：付费计划已内置该技能，可直接使用。
+
+**Claude API**：通过 Skills API 加载，详见 [Skills API Quickstart](https://docs.claude.com/en/api/skills-guide#creating-a-skill)。
+
+#### 应用场景举例
+
+**前端功能验证**
+
+在本地开发 Web 应用（如 React、Vue、Svelte）时，通过自然语言描述测试需求（如 "测试登录流程"），AI 会调用该技能，自动生成 Playwright 脚本，模拟用户操作并返回结果。
+
+**UI 行为调试与分析**
+
+当你发现页面中某元素渲染异常或交互行为异常时，可向 AI 下达指令（例如："截取首页完整截图" 或 "检查按钮的 DOM 结构"），AI 会执行该技能中的对应脚本，捕获截图或获取 HTML 内容，并将检查结果返回给你，以帮助你定位问题。
+
+**多服务应用测试**
+
+若你的应用为前后端分离架构，测试前端功能需后端 API 服务同步运行，只需向 AI 提供项目结构与启动命令，AI 会借助该技能中的 `with_server.py` 脚本来同时启动所有必需服务，再运行测试脚本，确保在完整的环境中执行测试。
 
 ### Agent-browser
 

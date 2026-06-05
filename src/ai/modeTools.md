@@ -186,8 +186,6 @@ Claude Code for VS Code
 claude update
 ```
 
-其他资料文档：https://docs.88code.org/ClaudeCode/Windows.html
-
 强制设置环境变量(用户级别)
 
 ```sh
@@ -195,10 +193,87 @@ claude update
 [System.Environment]::SetEnvironmentVariable(“ANTHROPIC_BASE_URL”, “https://open.bigmodel.cn/api/anthropic”, [System.EnvironmentVariableTarget]::User)
 [System.Environment]::SetEnvironmentVariable(“ANTHROPIC_AUTH_TOKEN”, “xxx”, [System.EnvironmentVariableTarget]::User)
 
-
 # 新开一个窗口查看
 echo $env:ANTHROPIC_BASE_URL
 ```
+
+其他资料文档：https://docs.88code.org/ClaudeCode/Windows.html
+
+### Claude Code Statusline Pro
+
+为 Claude Code 量身定制的智能状态栏系统。
+
+仓库地址：https://github.com/Wangnov/claude-code-statusline-pro
+
+#### 核心特性
+
+- **三大主题系统**：Classic、Powerline、Capsule 主题，自适应终端能力
+- **灵活的配置系统**：支持 TOML 配置文件和命令行参数覆盖
+- **精准 Token 计算**：与 Claude 官方 API 完全一致的 token 统计，支持渐变可视化进度条
+- **智能状态识别**：基于 tokens 数量精准识别 Thinking vs Ready 状态
+- **预设系统**：通过字母组合快速配置组件排布 (PMBTURS, MT, BT)
+- **跨平台兼容**：Windows、macOS、Linux 智能适配，支持各种终端
+- **多行小组件系统**：支持网格布局、静态/API 数据源、检测与过滤器，自由扩展状态栏
+- **高性能优化**：缓存机制，300ms 更新间隔，符合 Claude Code 官方建议
+- **双语支持**：中英双语配置界面和错误提示
+- **Rust 引擎**：提供原生 Rust 内核，更快更稳
+
+#### Rust 重写优化亮点
+
+- **原生 git2 仓库分析**：直接获取分支、状态、stash 等信息，避免频繁 Shell 调用，在大型仓库中依然流畅
+- **多层缓存体系**：组件级内存缓存结合会话持久化存储，减少重复解析配置与历史数据的 IO
+- **Tokio 异步运行时**：多线程调度渲染与文件操作，维持官方推荐的 300ms 更新节奏并提升稳定性
+- **增量 Transcript 解析**：按偏移量增量读取 `.jsonl`，并通过原子写入持久化快照，避免大型日志反复全量扫描
+- **配置与扩展缓存**：合并配置结果可复用并附带差异报告，多行组件缓存上次 Widget 内容以降低 I/O 和网络抖动
+
+#### 快速开始
+
+在项目根目录或 `$USER` 目录创建 `.claude/settings.json`：
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "npx ccsp@latest"
+  }
+}
+```
+
+> 兼容说明：旧命令 `npx claude-code-statusline-pro@latest` 仍可继续使用，并会提示迁移。建议将现有配置更新为 `npx ccsp@latest`。
+
+保存文件后，重新打开 Claude Code 即可看到专业版状态栏：
+
+```
+📁 my-project | 🤖 S4 | 🌿 main | 📊 [████████████░░░] 80.1%(160k/200k) | $21.07 | ✅ Ready
+```
+
+#### 预设系统 - 字母组合配置
+
+通过简单的字母组合快速定制状态栏显示内容：
+
+| 字母 | 含义 |
+| --- | --- |
+| P | Project（项目名称） |
+| M | Model（模型信息） |
+| B | Branch（Git 分支） |
+| T | Tokens（Token 使用情况） |
+| U | Usage（使用量统计） |
+| R | Rate Limit（Claude.ai 订阅计划 5h / 7d 限额） |
+| S | Status（状态信息） |
+
+快速配置命令（写在 settings.json 中，并非在终端直接执行）：
+
+```shell
+# 显示所有组件（推荐）
+npx ccsp@latest --preset PMBTURS --theme powerline
+
+# 只显示模型、Token和使用量
+npx ccsp@latest --preset MTU --theme classic
+
+# 只显示分支和Token信息
+npx ccsp@latest --preset BT --theme capsule
+```
+
 
 ## Cursor
 
@@ -379,6 +454,18 @@ docker run -d -p 80:80 \
   --name prompt-optimizer \
   linshen/prompt-optimizer
 ```
+
+### headroom
+
+你在用 LLM 处理日志、文件、RAG 分块时，大部分内容其实都是废话。headroom 在你把文本喂给模型之前，先把它们压缩一遍，号称能砍掉 60% 到 95% 的 token 量，答案质量不变。如果你每天跟 LLM API 账单较劲，或者跑 RAG 时感觉 token 烧得心疼，这个直接装。
+
+仓库地址：https://github.com/chopratejas/headroom
+
+```shell
+pip install headroom
+```
+
+它是 Python 库，附带 MCP 服务器，可以接进你已有的 Agent 流程。
 
 ## AI Dev Gallery
 
