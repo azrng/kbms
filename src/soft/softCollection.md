@@ -607,6 +607,18 @@ Motrix Next 是一款开源的全功能下载管理器，基于原版 Motrix 从
 
 下载地址：[https://github.com/AnInsomniacy/motrix-next/releases](https://github.com/AnInsomniacy/motrix-next/releases)
 
+### FluxDown
+
+Rust 驱动的多协议下载管理器，支持 HTTP/FTP/BitTorrent 磁力链接及 HLS/DASH 流媒体，智能多线程加速与浏览器无缝集成。精美界面，极致性能，永久免费，零广告。
+
+官网：[https://fluxdown.zerx.dev/](https://fluxdown.zerx.dev/)
+
+### XHS-Downloader
+
+小红书链接提取/作品采集工具：提取账号发布、收藏、点赞、专辑作品链接；提取搜索结果作品链接、用户链接；采集小红书作品信息；提取小红书作品下载地址；下载小红书作品文件！
+
+下载地址：[https://github.com/JoeanAmier/XHS-Downloader](https://github.com/JoeanAmier/XHS-Downloader)
+
 ### 4K Video Downloader
 
 如果是视频类的自媒体玩家，那么视频素材显得格外重要，我们一般会想要下载网络上的视频素材，进行加工和发布，市面上已有的且比较好用的，基本上是需要付费了。那么，这款神器对我来说是非常好用，且功能非常强大和稳定。它不仅支持现有的媒体网站，例如：Youtube，Vuneo，Tiktok，Blibli 等等，主要还是永久免费。
