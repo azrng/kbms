@@ -2,14 +2,13 @@
 // 软件目录
 
 export const softSidebar = [
-    "/soft/softCollection.md",
-    "/soft/browserPlug.md",
-    "/soft/game.md",
+
     {
         text: "软件合集",
         prefix: "/soft/tools/",
         collapsible: true,
         children: [
+            "README.md",
             "desktop.md",
             "browser.md",
             "reader.md",
@@ -29,6 +28,8 @@ export const softSidebar = [
             "system.md",
         ]
     },
+    "/soft/browserPlug.md",
+    "/soft/game.md",
     {
         text: "开发者工具",
         collapsible: true,

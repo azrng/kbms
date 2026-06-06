@@ -12,7 +12,7 @@ export default navbar([
   { text: '软件设计', link: '/softwareDesign/' },  // 注释
   { text: '云原生', link: '/cloud/' },
   { text: '其他语言', link: '/otherLanguage/' },  // 注释
-  { text: '软件', link: '/soft/softCollection.md' },
+  { text: '软件', link: '/soft/tools/' },
   // { text: '面试', link: '/interview/' },  // 注释
   { text: "组件文档", link: "https://azrng.github.io/nuget-docs/" },
   { text: '文章', link: '/classicArticle/' },
