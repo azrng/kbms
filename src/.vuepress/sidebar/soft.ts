@@ -3,9 +3,32 @@
 
 export const softSidebar = [
     "/soft/softCollection.md",
-    "/soft/webAddress.md",
     "/soft/browserPlug.md",
     "/soft/game.md",
+    {
+        text: "软件合集",
+        prefix: "/soft/tools/",
+        collapsible: true,
+        children: [
+            "desktop.md",
+            "browser.md",
+            "reader.md",
+            "remoteControl.md",
+            "office.md",
+            "audio.md",
+            "image.md",
+            "video.md",
+            "download.md",
+            "cloudStorage.md",
+            "inputMethod.md",
+            "backup.md",
+            "entertainment.md",
+            "devTools.md",
+            "proxy.md",
+            "daily.md",
+            "system.md",
+        ]
+    },
     {
         text: "开发者工具",
         collapsible: true,
