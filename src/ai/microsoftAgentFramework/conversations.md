@@ -82,13 +82,14 @@ AgentSession session = await agent.CreateSessionAsync();
 // 使用会话
 await agent.RunAsync("第一轮对话", session);
 
-// 序列化会话状态
-string serializedState = await agent.SerializeSessionAsync(session);
+// 序列化会话状态（返回 JsonElement）
+JsonElement serializedState = await agent.SerializeSessionAsync(session);
 
 // 存储 serializedState 到数据库、Redis 等...
+// 可以用 JsonSerializer.Serialize(serializedState) 转为字符串存储
 
 // 恢复会话
-AgentSession restoredSession = await agent.CreateSessionAsync(serializedState);
+AgentSession restoredSession = await agent.DeserializeSessionAsync(serializedState);
 await agent.RunAsync("继续对话", restoredSession);
 ```
 
@@ -167,7 +168,7 @@ await foreach (var update in agent.RunStreamingAsync(
 
 ## Per-Service-Call 持久化（崩溃恢复）
 
-v1.6.1 新增每次服务调用级别的聊天历史持久化，支持崩溃后恢复。
+v1.9.0 新增每次服务调用级别的聊天历史持久化，支持崩溃后恢复。
 
 ```csharp
 ChatClientAgent agent = new ChatClientAgent(

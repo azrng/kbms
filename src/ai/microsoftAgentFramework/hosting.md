@@ -29,8 +29,8 @@ tag:
 | `Microsoft.Agents.AI.Hosting.A2A.AspNetCore` | ASP.NET Core A2A 端点 |
 | `Microsoft.Agents.AI.Hosting.AGUI.AspNetCore` | ASP.NET Core AG-UI SSE 端点 |
 | `Microsoft.Agents.AI.Hosting.OpenAI` | OpenAI 兼容 API 托管 |
-| `Microsoft.Agents.AI.Foundry.Hosting` | Foundry 托管工具箱（v1.6.1 新增） |
-| `Aspire.Hosting.AgentFramework.DevUI` | Aspire DevUI 集成（v1.6.1 新增） |
+| `Microsoft.Agents.AI.Foundry.Hosting` | Foundry 托管工具箱（v1.9.0 新增） |
+| `Aspire.Hosting.AgentFramework.DevUI` | Aspire DevUI 集成（v1.9.0 新增） |
 
 ## HostedAgentBuilder
 
@@ -59,8 +59,8 @@ builder.Services.AddHostedWorkflow("my-workflow", builder => builder
 ### Durable Task Agent
 
 ```xml
-<PackageReference Include="Microsoft.Agents.AI.DurableTask" Version="1.6.1" />
-<PackageReference Include="Microsoft.Agents.AI.Hosting.AzureFunctions" Version="1.6.1" />
+<PackageReference Include="Microsoft.Agents.AI.DurableTask" Version="1.9.0" />
+<PackageReference Include="Microsoft.Agents.AI.Hosting.AzureFunctions" Version="1.9.0" />
 ```
 
 ```csharp
@@ -89,10 +89,10 @@ var durableAgent = new DurableAIAgent(agent);
 // 支持断点续传和故障恢复
 ```
 
-## Foundry 托管（v1.6.1 新增）
+## Foundry 托管（v1.9.0 新增）
 
 ```xml
-<PackageReference Include="Microsoft.Agents.AI.Foundry.Hosting" Version="1.6.1" />
+<PackageReference Include="Microsoft.Agents.AI.Foundry.Hosting" Version="1.9.0" />
 ```
 
 Foundry Hosting 提供完整的托管基础设施：
@@ -108,7 +108,7 @@ using Microsoft.Agents.AI.Foundry.Hosting;
 // Foundry 托管 Agent 配置
 ```
 
-## M365 Agent（v1.6.1 新增）
+## M365 Agent（v1.9.0 新增）
 
 集成 Microsoft 365 Agents SDK，将 Agent 部署到 Teams 和 Copilot。
 
@@ -128,7 +128,7 @@ M365 Agent 特性：
 - devtunnels 本地调试
 - Agents Playground 测试
 
-## OAuth 授权（v1.6.1 新增）
+## OAuth 授权（v1.9.0 新增）
 
 基于 OAuth 2.0 scope 的 Agent 和工具级授权。
 
@@ -156,7 +156,7 @@ WebClient → AgentService (OAuth protected) → AI Model
 ### ASP.NET Core A2A 端点
 
 ```xml
-<PackageReference Include="Microsoft.Agents.AI.Hosting.A2A.AspNetCore" Version="1.6.1" />
+<PackageReference Include="Microsoft.Agents.AI.Hosting.A2A.AspNetCore" Version="1.9.0" />
 ```
 
 ```csharp
@@ -176,7 +176,7 @@ builder.Services.AddA2AEndpoints();
 ### ASP.NET Core AG-UI SSE 端点
 
 ```xml
-<PackageReference Include="Microsoft.Agents.AI.Hosting.AGUI.AspNetCore" Version="1.6.1" />
+<PackageReference Include="Microsoft.Agents.AI.Hosting.AGUI.AspNetCore" Version="1.9.0" />
 ```
 
 ```csharp
@@ -184,7 +184,7 @@ builder.Services.AddA2AEndpoints();
 // 支持 Agent UI 协议的实时流式通信
 ```
 
-### AG-UI WebChat（v1.6.1 新增）
+### AG-UI WebChat（v1.9.0 新增）
 
 ```csharp
 // AG-UI Web Chat 客户端
@@ -195,7 +195,7 @@ builder.Services.AddA2AEndpoints();
 ## OpenAI 兼容 API 托管
 
 ```xml
-<PackageReference Include="Microsoft.Agents.AI.Hosting.OpenAI" Version="1.6.1" />
+<PackageReference Include="Microsoft.Agents.AI.Hosting.OpenAI" Version="1.9.0" />
 ```
 
 ```csharp
@@ -206,7 +206,7 @@ builder.Services.AddA2AEndpoints();
 ## Cosmos DB 持久化
 
 ```xml
-<PackageReference Include="Microsoft.Agents.AI.CosmosNoSql" Version="1.6.1" />
+<PackageReference Include="Microsoft.Agents.AI.CosmosNoSql" Version="1.9.0" />
 ```
 
 ```csharp
@@ -217,7 +217,7 @@ builder.Services.AddSingleton<ChatHistoryProvider, CosmosChatHistoryProvider>();
 ## Microsoft Purview 治理
 
 ```xml
-<PackageReference Include="Microsoft.Agents.AI.Purview" Version="1.6.1" />
+<PackageReference Include="Microsoft.Agents.AI.Purview" Version="1.9.0" />
 ```
 
 ```csharp
@@ -225,10 +225,10 @@ builder.Services.AddSingleton<ChatHistoryProvider, CosmosChatHistoryProvider>();
 // 提供 AI 治理、合规性监控
 ```
 
-## DevUI Aspire 集成（v1.6.1 新增）
+## DevUI Aspire 集成（v1.9.0 新增）
 
 ```xml
-<PackageReference Include="Aspire.Hosting.AgentFramework.DevUI" Version="1.6.1" />
+<PackageReference Include="Aspire.Hosting.AgentFramework.DevUI" Version="1.9.0" />
 ```
 
 ```csharp
@@ -236,7 +236,7 @@ builder.Services.AddSingleton<ChatHistoryProvider, CosmosChatHistoryProvider>();
 // 多 Agent 统一调试界面
 // Azure AI Foundry 集成
 var builder = DistributedApplication.CreateBuilder(args);
-builder.AddAgentFrameworkDevUI("devui");
+builder.AddDevUI("devui");
 ```
 
 ## 控制台应用示例

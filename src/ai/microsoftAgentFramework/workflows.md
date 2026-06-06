@@ -19,50 +19,59 @@ tag:
 `Microsoft.Agents.AI.Workflows` 提供了强大的工作流引擎，用于编排复杂的多步骤 AI 工作流。
 
 ```xml
-<PackageReference Include="Microsoft.Agents.AI.Workflows" Version="1.6.1" />
+<PackageReference Include="Microsoft.Agents.AI.Workflows" Version="1.9.0" />
 ```
 
 ## WorkflowBuilder
 
+`WorkflowBuilder` 的构造函数需要一个起始 Executor（执行器）。`AIAgent` 可以隐式转换为 `ExecutorBinding`，所以可以直接传入 Agent。
+
 ```csharp
 using Microsoft.Agents.AI.Workflows;
 
-var workflow = new WorkflowBuilder()
-    .AddExecutor("step1", async (context, ct) =>
-    {
-        // 第一步处理
-        return new ExecutorResult { Output = "步骤1完成" };
-    })
-    .AddExecutor("step2", async (context, ct) =>
-    {
-        // 第二步处理
-        return new ExecutorResult { Output = "步骤2完成" };
-    })
-    .AddEdge("step1", "step2")  // 步骤1完成后执行步骤2
+// 定义执行器（可以是 Agent 或自定义 Executor）
+AIAgent step1Agent = chatClient.AsAIAgent(instructions: "处理第一步");
+AIAgent step2Agent = chatClient.AsAIAgent(instructions: "处理第二步");
+
+// 构建工作流：起始执行器 → step1 → step2
+var workflow = new WorkflowBuilder(step1Agent)
+    .AddEdge(step1Agent, step2Agent)  // step1 完成后执行 step2
     .Build();
 ```
 
 ## 在工作流中使用 Agent
 
+Agent 可以直接作为工作流的执行器，通过 `AddEdge` 连接：
+
 ```csharp
-var workflow = new WorkflowBuilder()
-    .AddAgentExecutor("writer", writerAgent, "写一篇关于 {topic} 的文章")
-    .AddAgentExecutor("reviewer", reviewerAgent, "审查以下文章并给出修改建议：{input}")
-    .AddEdge("writer", "reviewer")
+AIAgent writerAgent = chatClient.AsAIAgent(instructions: "你是一个专业的写作助手");
+AIAgent reviewerAgent = chatClient.AsAIAgent(instructions: "你是一个文章审查专家");
+
+var workflow = new WorkflowBuilder(writerAgent)
+    .AddEdge(writerAgent, reviewerAgent)
     .Build();
 
-var session = await workflow.RunAsync(new Dictionary<string, object>
+// 执行工作流
+await using StreamingRun run = await InProcessExecution.RunStreamingAsync(
+    workflow, new ChatMessage(ChatRole.User, "写一篇关于 AI Agent 开发的文章"));
+
+await run.TrySendMessageAsync(new TurnToken(emitEvents: true));
+await foreach (WorkflowEvent evt in run.WatchStreamAsync())
 {
-    ["topic"] = "AI Agent 开发"
-});
+    if (evt is AgentResponseUpdateEvent update)
+        Console.Write(update.Data);
+}
 ```
 
 ## 流式工作流
 
 ```csharp
-await foreach (var update in workflow.RunStreamingAsync(input))
+await using StreamingRun run = await InProcessExecution.RunStreamingAsync(workflow, input);
+await run.TrySendMessageAsync(new TurnToken(emitEvents: true));
+await foreach (WorkflowEvent evt in run.WatchStreamAsync())
 {
-    Console.Write(update.Text);
+    if (evt is AgentResponseUpdateEvent update)
+        Console.Write(update.Data);
 }
 ```
 
@@ -71,12 +80,13 @@ await foreach (var update in workflow.RunStreamingAsync(input))
 ### 基本并发
 
 ```csharp
-var workflow = new WorkflowBuilder()
-    .AddExecutor("start", ...)
-    .AddExecutor("taskA", ...)  // 并发
-    .AddExecutor("taskB", ...)  // 并发
-    .AddExecutor("taskC", ...)  // 并发
-    .AddExecutor("merge", ...)  // 汇总
+// 使用占位符 ID 定义执行器，稍后绑定
+var workflow = new WorkflowBuilder("start")
+    .BindExecutor(startExecutor)
+    .BindExecutor(taskA)
+    .BindExecutor(taskB)
+    .BindExecutor(taskC)
+    .BindExecutor(merge)
     .AddEdge("start", "taskA")
     .AddEdge("start", "taskB")
     .AddEdge("start", "taskC")
@@ -86,7 +96,7 @@ var workflow = new WorkflowBuilder()
     .Build();
 ```
 
-### Fan-out/Fan-in Edge（v1.6.1 新增）
+### Fan-out/Fan-in Edge（v1.9.0 新增）
 
 ```csharp
 var workflow = new WorkflowBuilder()
@@ -106,78 +116,77 @@ var workflow = new WorkflowBuilder()
 
 ## 条件边（Conditional Edges）
 
+使用泛型 `AddEdge<T>` 方法，通过 `condition` 参数实现条件路由：
+
 ```csharp
-var workflow = new WorkflowBuilder()
-    .AddExecutor("classifier", ...)
-    .AddExecutor("handleA", ...)
-    .AddExecutor("handleB", ...)
-    .AddConditionalEdge("classifier", result =>
-    {
-        return result.Output switch
-        {
-            "typeA" => "handleA",
-            "typeB" => "handleB",
-            _ => "handleA"
-        };
-    })
+var workflow = new WorkflowBuilder(classifier)
+    .AddEdge(classifier, handleA, (string? result) => result == "typeA")
+    .AddEdge(classifier, handleB, (string? result) => result == "typeB")
     .Build();
 ```
 
-## Switch-Case 模式（v1.6.1 新增）
+也可以使用 `AddSwitch` 实现更清晰的多分支路由：
 
 ```csharp
-var workflow = new WorkflowBuilder()
-    .AddExecutor("router", ...)
-    .AddExecutor("techAgent", ...)
-    .AddExecutor("salesAgent", ...)
-    .AddExecutor("supportAgent", ...)
-    .AddSwitch("router", result => result.Category,
-        new Dictionary<string, string>
-        {
-            ["技术问题"] = "techAgent",
-            ["销售咨询"] = "salesAgent",
-            ["投诉"] = "supportAgent"
-        })
+var workflow = new WorkflowBuilder(classifier)
+    .AddSwitch(classifier, switch_ => switch_
+        .AddCase(result => result == "typeA", handleA)
+        .AddCase(result => result == "typeB", handleB))
     .Build();
 ```
 
-## Chain 模式（v1.6.1 新增）
+## Switch-Case 模式
+
+使用 `AddSwitch` 实现多分支路由：
 
 ```csharp
-// 快速构建顺序执行链
-var workflow = new WorkflowBuilder()
-    .AddChain("step1", "step2", "step3", "step4")
+var workflow = new WorkflowBuilder(router)
+    .AddSwitch(router, switch_ => switch_
+        .AddCase(result => result.Category == "技术问题", techAgent)
+        .AddCase(result => result.Category == "销售咨询", salesAgent)
+        .AddCase(result => result.Category == "投诉", supportAgent))
     .Build();
 ```
 
-## 消息转发（v1.6.1 新增）
+## Chain 模式
+
+使用 `AddChain` 快速构建顺序执行链：
 
 ```csharp
-// 转发所有消息
-.ForwardMessage("step1", "step2")
+var workflow = new WorkflowBuilder(step1)
+    .AddChain(step1, [step2, step3, step4])
+    .Build();
+```
+
+## 消息转发
+
+使用泛型扩展方法实现消息类型过滤和转发：
+
+```csharp
+// 转发指定类型的消息
+.ForwardMessage<ChatMessage>(step1, step2)
 
 // 转发除指定类型外的所有消息
-.ForwardExcept("step1", "step2", typeof(ErrorMessage))
+.ForwardExcept<ErrorMessage>(step1, step2)
 
-// 外部系统调用
-.AddExternalCall("step1", "http://api.example.com/process")
+// 外部系统调用（需要指定请求和响应类型）
+.AddExternalCall<Request, Response>(step1, "externalPort")
 ```
 
 ## 混合工作流（Agent + Executor）
 
-v1.6.1 新增适配器模式，允许 Agent 和 Executor 在同一工作流中混合使用。
+Agent 和自定义 Executor 可以在同一工作流中混合使用。Agent 通过隐式转换为 `ExecutorBinding` 参与工作流。
 
 ```csharp
-// 使用适配器将 Agent 的 ChatMessage 输出转换为 Executor 需要的 string
-var workflow = new WorkflowBuilder()
-    .AddAgentExecutor("aiAgent", myAgent, "分析以下内容")
-    .AddExecutor("postProcess", async (context, ct) =>
-    {
-        // 类型转换适配器
-        var input = context.State["aiAgent_output"]?.ToString();
-        return new ExecutorResult { Output = $"处理后的: {input}" };
-    })
-    .AddEdge("aiAgent", "postProcess")
+// Agent 作为执行器
+AIAgent aiAgent = chatClient.AsAIAgent(instructions: "分析内容");
+
+// 自定义函数执行器
+ExecutorBinding postProcess = ((Func<string, ValueTask<string>>)(async input =>
+    $"处理后的: {input}")).BindAsExecutor("postProcess");
+
+var workflow = new WorkflowBuilder(aiAgent)
+    .AddEdge(aiAgent, postProcess)
     .Build();
 ```
 
@@ -191,11 +200,12 @@ var workflow = new WorkflowBuilder()
 工作流支持检查点，可暂停和恢复长时间运行的工作流。
 
 ```csharp
-// 保存检查点
-var checkpoint = await workflow.SaveCheckpointAsync(session);
+// 执行工作流并保存检查点
+await using StreamingRun run = await InProcessExecution.RunStreamingAsync(workflow, input);
+var checkpoint = await run.SaveCheckpointAsync();
 
-// 从检查点恢复
-var restoredSession = await workflow.RestoreCheckpointAsync(checkpoint);
+// 从检查点恢复执行
+await using StreamingRun resumedRun = await InProcessExecution.RunStreamingAsync(workflow, checkpoint);
 ```
 
 ### 检查点 + 人工介入（HITL）
@@ -207,23 +217,25 @@ var restoredSession = await workflow.RestoreCheckpointAsync(checkpoint);
 
 ## 子工作流（Sub-workflows）
 
+子工作流通过 `BindAsExecutor()` 转换为执行器后嵌入主工作流：
+
 ```csharp
-var subWorkflow = new WorkflowBuilder()
-    .AddExecutor("sub1", ...)
-    .AddExecutor("sub2", ...)
-    .AddEdge("sub1", "sub2")
+// 构建子工作流
+var subWorkflow = new WorkflowBuilder(sub1)
+    .AddEdge(sub1, sub2)
     .Build();
 
-var mainWorkflow = new WorkflowBuilder()
-    .AddExecutor("start", ...)
-    .AddSubWorkflow("subProcess", subWorkflow)
-    .AddExecutor("end", ...)
-    .AddEdge("start", "subProcess")
-    .AddEdge("subProcess", "end")
+// 将子工作流绑定为执行器
+ExecutorBinding subExecutor = subWorkflow.BindAsExecutor("subProcess");
+
+// 构建主工作流
+var mainWorkflow = new WorkflowBuilder(start)
+    .AddEdge(start, subExecutor)
+    .AddEdge(subExecutor, end)
     .Build();
 ```
 
-## 可视化（v1.6.1 新增）
+## 可视化（v1.9.0 新增）
 
 框架支持工作流可视化，生成流程图。
 
@@ -259,35 +271,34 @@ Console.WriteLine(dot);
 
 ## 共享状态
 
+工作流中的 Executor 可以通过 `IWorkflowContext` 共享状态：
+
 ```csharp
-// 工作流中的 Executor 共享状态
-var workflow = new WorkflowBuilder()
-    .AddExecutor("step1", async (context, ct) =>
+// 自定义 Executor 使用共享状态
+public class Step1Executor : Executor<string>
+{
+    public Step1Executor() : base("step1") { }
+
+    protected override ValueTask HandleAsync(string input, IWorkflowContext context, CancellationToken ct)
     {
         context.State["key1"] = "value1";
-        return new ExecutorResult { Output = "..." };
-    })
-    .AddExecutor("step2", async (context, ct) =>
-    {
-        var value = context.State["key1"];
-        return new ExecutorResult { Output = "..." };
-    })
-    .AddEdge("step1", "step2")
-    .Build();
+        return default;
+    }
+}
 ```
 
 ## Writer-Critic 工作流
 
-v1.6.1 新增 Writer-Critic 工作流完整示例，支持迭代优化和质量关卡。
+Writer-Critic 模式支持迭代优化和质量关卡。
 
 ```csharp
-// Writer 生成内容 → Critic 审查 → 质量关卡检查
-// 可设置安全限制（最大迭代次数）
-var workflow = new WorkflowBuilder()
-    .AddAgentExecutor("writer", writerAgent, "写一篇文章关于 {topic}")
-    .AddAgentExecutor("critic", criticAgent, "审查并改进：{input}")
-    .AddEdge("writer", "critic")
-    // 迭代循环直到满足质量标准
+AIAgent writerAgent = chatClient.AsAIAgent(instructions: "你是一个专业的写作助手");
+AIAgent criticAgent = chatClient.AsAIAgent(instructions: "你是一个严格的文章审查专家");
+
+// Writer 生成内容 → Critic 审查 → 循环直到满足质量标准
+var workflow = new WorkflowBuilder(writerAgent)
+    .AddEdge(writerAgent, criticAgent)
+    .AddEdge(criticAgent, writerAgent, (string? feedback) => !IsQualityMet(feedback))
     .Build();
 ```
 

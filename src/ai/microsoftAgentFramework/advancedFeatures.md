@@ -39,7 +39,7 @@ Console.WriteLine($"{result.City}: {result.Temperature}°C, {result.Condition}")
 
 ## Skills（技能系统）
 
-框架 v1.6.1 技能系统支持多种定义方式。
+框架 v1.9.0 技能系统支持多种定义方式。
 
 ### 文件型技能（File-based Skills）
 
@@ -101,8 +101,8 @@ builder.Services.AddAgentSkill<MySkill>();
 通过 YAML 文件定义 Agent 和工作流，无需编译。
 
 ```xml
-<PackageReference Include="Microsoft.Agents.AI.Declarative" Version="1.6.1" />
-<PackageReference Include="Microsoft.Agents.AI.Workflows.Declarative" Version="1.6.1" />
+<PackageReference Include="Microsoft.Agents.AI.Declarative" Version="1.9.0" />
+<PackageReference Include="Microsoft.Agents.AI.Workflows.Declarative" Version="1.9.0" />
 ```
 
 ### 声明式 Agent
@@ -111,7 +111,7 @@ builder.Services.AddAgentSkill<MySkill>();
 # agent.yaml
 name: MyAgent
 instructions: 你是一个专业的助手
-model: gpt-4o-mini
+model: gpt-5.4-mini
 ```
 
 ```csharp
@@ -142,13 +142,13 @@ edges:
 声明式工作流支持代码生成和 PowerFx 表达式。
 
 ```xml
-<PackageReference Include="Microsoft.Agents.AI.Workflows.Generators" Version="1.6.1" />
+<PackageReference Include="Microsoft.Agents.AI.Workflows.Generators" Version="1.9.0" />
 ```
 
-### Foundry 声明式（v1.6.1 新增）
+### Foundry 声明式（v1.9.0 新增）
 
 ```xml
-<PackageReference Include="Microsoft.Agents.AI.Workflows.Declarative.Foundry" Version="1.6.1" />
+<PackageReference Include="Microsoft.Agents.AI.Workflows.Declarative.Foundry" Version="1.9.0" />
 ```
 
 ```csharp
@@ -156,12 +156,12 @@ edges:
 // AzureAgentProvider：基于 Foundry 的 Agent 预配
 ```
 
-## Hyperlight 沙箱执行（v1.6.1 新增）
+## Hyperlight 沙箱执行（v1.9.0 新增）
 
 通过 Hyperlight 实现 VM 级隔离的安全代码执行。
 
 ```xml
-<PackageReference Include="Microsoft.Agents.AI.Hyperlight" Version="1.6.1" />
+<PackageReference Include="Microsoft.Agents.AI.Hyperlight" Version="1.9.0" />
 ```
 
 ### 特性
@@ -180,12 +180,12 @@ edges:
 
 详见 [函数工具 - CodeAct 模式](functionTools.md#codeact-模式沙箱代码执行)
 
-## HarnessAgent（v1.6.1 新增）
+## HarnessAgent
 
 一站式预配置 Agent，自动组装完整管道。
 
 ```xml
-<PackageReference Include="Microsoft.Agents.AI.Harness" Version="1.6.1" />
+<PackageReference Include="Microsoft.Agents.AI.Harness" Version="1.9.0" />
 ```
 
 ### 管道组成
@@ -210,18 +210,23 @@ HarnessAgent
 | `FileMemoryProvider` | 基于文件的会话记忆 |
 | `FileAccessProvider` | 共享文件访问（如 CSV 数据处理） |
 | `AgentSkillsProvider` | 技能发现和加载 |
-| `SubAgentsProvider` | 子 Agent 委派 |
 
 ### 使用示例
 
 ```csharp
-using Microsoft.Agents.AI.Harness;
+using Microsoft.Agents.AI;
 
-var agent = HarnessAgent.Create(chatClient, options =>
-{
-    options.Name = "MyAgent";
-    options.Instructions = "你是一个全能助手";
-});
+var agent = chatClient.AsHarnessAgent(
+    maxContextWindowTokens: 1_050_000,
+    maxOutputTokens: 128_000,
+    options: new HarnessAgentOptions
+    {
+        Name = "MyAgent",
+        ChatOptions = new ChatOptions
+        {
+            Instructions = "你是一个全能助手"
+        }
+    });
 
 await foreach (var update in agent.RunStreamingAsync("帮我分析这份数据"))
 {
@@ -229,7 +234,7 @@ await foreach (var update in agent.RunStreamingAsync("帮我分析这份数据")
 }
 ```
 
-## Managed Agent 模式（v1.6.1 新增）
+## Managed Agent 模式（v1.9.0 新增）
 
 Anthropic 的 Managed Agent 架构模式实现，将 Agent 分解为三个组件：
 
@@ -270,7 +275,7 @@ Anthropic 的 Managed Agent 架构模式实现，将 Agent 分解为三个组件
 - Blob Storage 文件存储
 - Key Vault 凭证管理
 
-## 评估框架（v1.6.1 新增）
+## 评估框架（v1.9.0 新增）
 
 框架新增完整的评估体系，支持多种评估方式。
 
@@ -388,7 +393,7 @@ await foreach (var update in agent.RunStreamingAsync(
 5. 状态管理
 
 ```xml
-<PackageReference Include="Microsoft.Agents.AI.AGUI" Version="1.6.1" />
+<PackageReference Include="Microsoft.Agents.AI.AGUI" Version="1.9.0" />
 ```
 
 ## A2A（Agent-to-Agent 协议）
@@ -412,7 +417,7 @@ var a2aAgent = new A2AAgent(...);
 
 ## Deep Research（深度研究）
 
-v1.6.1 新增深度研究模式。
+v1.9.0 新增深度研究模式。
 
 ```csharp
 // Deep Research Tool
@@ -422,7 +427,7 @@ v1.6.1 新增深度研究模式。
 // - 生成研究报告
 ```
 
-## 动态函数工具（v1.6.1 新增）
+## 动态函数工具（v1.9.0 新增）
 
 运行时动态创建和注册函数工具。
 
@@ -431,7 +436,7 @@ v1.6.1 新增深度研究模式。
 // 无需预编译，运行时生成
 ```
 
-## Per-Service-Call 检查点（v1.6.1 新增）
+## Per-Service-Call 检查点（v1.9.0 新增）
 
 每次服务调用级别的聊天历史持久化，支持崩溃恢复。
 

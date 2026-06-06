@@ -58,7 +58,7 @@ public abstract class AIAgent
 | `A2AAgent` | Agent-to-Agent 协议 |
 | `CopilotStudioAgent` | Copilot Studio 集成 |
 | `GitHubCopilotAgent` | GitHub Copilot 集成 |
-| `HarnessAgent` | 一站式预配置 Agent（v1.6.1 新增） |
+| `HarnessAgent` | 一站式预配置 Agent（v1.9.0 新增） |
 
 ## ChatClientAgent
 
@@ -109,10 +109,10 @@ new ChatClientAgentOptions
     LoggerFactory = loggerFactory,
     Services = new Dictionary<Type, object>(),
 
-    // v1.6.1 新增：每次服务调用持久化（崩溃恢复）
+    // v1.9.0 新增：每次服务调用持久化（崩溃恢复）
     RequirePerServiceCallChatHistoryPersistence = true,
 
-    // v1.6.1 新增：消息注入（运行中动态注入消息）
+    // v1.9.0 新增：消息注入（运行中动态注入消息）
     EnableMessageInjection = true,
 
     // ChatHistoryProvider 冲突处理
@@ -187,7 +187,7 @@ public abstract class DelegatingAIAgent : AIAgent
 ```csharp
 using Microsoft.Agents.AI;
 
-var agent = new AIAgentBuilder()
+var agent = chatClientAgent.AsBuilder()
     .Use(async (agent, messages, session, options, ct, next) =>
     {
         // 前置处理
@@ -198,20 +198,20 @@ var agent = new AIAgentBuilder()
         return response;
     })
     .UseAIContextProviders(contextProvider)
-    .Build(chatClientAgent);
+    .Build();
 ```
 
 ### 内置中间件扩展
 
 ```csharp
-var agent = new AIAgentBuilder()
+var agent = chatClientAgent.AsBuilder()
     .UseOpenTelemetry()        // OpenTelemetry 遥测
     .UseToolApproval()         // 工具审批（支持 "Don't ask again"）
     .UseAIContextProviders(     // 上下文注入
         new TimeContextProvider(),
         new CustomRagProvider())
     .UseLogging(loggerFactory) // 日志记录
-    .Build(chatClientAgent);
+    .Build();
 ```
 
 ## 关键命名空间

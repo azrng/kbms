@@ -20,7 +20,7 @@ tag:
 
 ## 评估框架
 
-v1.6.1 新增完整的评估体系，使用 `Microsoft.Extensions.AI.Evaluation` 对 Agent 和工作流进行自动化质量评估。
+v1.9.0 新增完整的评估体系，使用 `Microsoft.Extensions.AI.Evaluation` 对 Agent 和工作流进行自动化质量评估。
 
 ### 质量评估器
 
@@ -120,9 +120,9 @@ v1.6.1 新增完整的评估体系，使用 `Microsoft.Extensions.AI.Evaluation`
 using Microsoft.Agents.AI;
 
 // 通过 AIAgentBuilder
-var agent = new AIAgentBuilder()
+var agent = chatClientAgent.AsBuilder()
     .UseOpenTelemetry()
-    .Build(chatClientAgent);
+    .Build();
 
 // 通过 DI 管道
 builder.Services.AddChatClient(chatClient)
@@ -195,7 +195,7 @@ Azure 生产环境监控。
 交互式 Web 调试界面，实时可视化 Agent 执行过程。
 
 ```xml
-<PackageReference Include="Microsoft.Agents.AI.DevUI" Version="1.6.1" />
+<PackageReference Include="Microsoft.Agents.AI.DevUI" Version="1.9.0" />
 ```
 
 ### 独立使用
@@ -209,7 +209,7 @@ Azure 生产环境监控。
 ### Aspire 集成
 
 ```xml
-<PackageReference Include="Aspire.Hosting.AgentFramework.DevUI" Version="1.6.1" />
+<PackageReference Include="Aspire.Hosting.AgentFramework.DevUI" Version="1.9.0" />
 ```
 
 ```csharp
@@ -222,7 +222,7 @@ var editor = builder.AddProject<Projects.AgentService>("editor")
     .WithAgentService("EditorAgent");
 
 // DevUI 自动发现所有注册的 Agent
-builder.AddAgentFrameworkDevUI("devui");
+builder.AddDevUI("devui");
 ```
 
 ### 功能

@@ -25,7 +25,7 @@ using OpenAI;
 using Microsoft.Agents.AI;
 
 AIAgent agent = new OpenAIClient(apiKey)
-    .GetChatClient("gpt-4o-mini")
+    .GetChatClient("gpt-5.4-mini")
     .AsAIAgent(
         instructions: "你是一个助手。",
         name: "MyAgent"
@@ -42,7 +42,7 @@ using Microsoft.Agents.AI;
 AIAgent agent = new AzureOpenAIClient(
     new Uri(endpoint),
     new AzureCliCredential())
-    .GetChatClient("gpt-4o-mini")
+    .GetChatClient("gpt-5.4-mini")
     .AsAIAgent(
         instructions: "你是一个助手。",
         name: "MyAgent"
@@ -76,18 +76,18 @@ AIAgent agent = new AzureOpenAIClient(endpoint, credential)
 
 ## OpenAI 原生 SDK 类型
 
-v1.6.1 新增对 OpenAI 原生 SDK 类型的直接支持，无需经过 `Microsoft.Extensions.AI.Abstractions` 转换。
+v1.9.0 新增对 OpenAI 原生 SDK 类型的直接支持，无需经过 `Microsoft.Extensions.AI.Abstractions` 转换。
 
 ```csharp
 using Microsoft.Agents.AI.OpenAI;
 
 // OpenAI ChatCompletion 原生客户端
-var openAIChatAgent = new OpenAIChatClientAgent(openAIClient, "gpt-4o-mini",
+var openAIChatAgent = new OpenAIChatClientAgent(openAIClient, "gpt-5.4-mini",
     instructions: "你是一个助手",
     name: "MyAgent");
 
 // OpenAI Responses API 原生客户端
-var openAIResponseAgent = new OpenAIResponseClientAgent(openAIClient, "gpt-4o-mini",
+var openAIResponseAgent = new OpenAIResponseClientAgent(openAIClient, "gpt-5.4-mini",
     instructions: "你是一个助手",
     name: "MyAgent");
 ```
@@ -125,7 +125,7 @@ Foundry 提供额外的 27 个示例步骤，包括：
 ## Anthropic Claude
 
 ```xml
-<PackageReference Include="Microsoft.Agents.AI.Anthropic" Version="1.6.1" />
+<PackageReference Include="Microsoft.Agents.AI.Anthropic" Version="1.9.0" />
 ```
 
 ```csharp
@@ -140,10 +140,10 @@ AIAgent agent = anthropicClient
 
 ## Azure AI Persistent Agents
 
-v1.6.1 新增，集成 Azure AI Agents Persistent 服务，支持跨会话的持久化 Agent 对话。
+v1.9.0 新增，集成 Azure AI Agents Persistent 服务，支持跨会话的持久化 Agent 对话。
 
 ```xml
-<PackageReference Include="Microsoft.Agents.AI.AzureAI.Persistent" Version="1.6.1" />
+<PackageReference Include="Microsoft.Agents.AI.AzureAI.Persistent" Version="1.9.0" />
 ```
 
 ```csharp
@@ -196,7 +196,7 @@ A2A 支持两种交互模式：
 
 ## HarnessAgent（一站式 Agent）
 
-v1.6.1 新增，预配置的完整 Agent 管道，自动组装：
+预配置的完整 Agent 管道，自动组装：
 - `FunctionInvokingChatClient`（自动函数调用）
 - `MessageInjectingChatClient`（运行中消息注入）
 - `PerServiceCallChatHistoryPersistingChatClient`（每次调用持久化）
@@ -206,17 +206,24 @@ v1.6.1 新增，预配置的完整 Agent 管道，自动组装：
 - 内置 `HostedWebSearchTool`（Web 搜索）
 
 ```xml
-<PackageReference Include="Microsoft.Agents.AI.Harness" Version="1.6.1" />
+<PackageReference Include="Microsoft.Agents.AI.Harness" Version="1.9.0" />
 ```
 
 ```csharp
-using Microsoft.Agents.AI.Harness;
+using Microsoft.Agents.AI;
 
-var agent = HarnessAgent.Create(chatClient, options =>
-{
-    options.Name = "MyAgent";
-    options.Instructions = "你是一个全能助手";
-});
+// 通过扩展方法创建
+var agent = chatClient.AsHarnessAgent(
+    maxContextWindowTokens: 1_050_000,
+    maxOutputTokens: 128_000,
+    options: new HarnessAgentOptions
+    {
+        Name = "MyAgent",
+        ChatOptions = new ChatOptions
+        {
+            Instructions = "你是一个全能助手"
+        }
+    });
 ```
 
 内置上下文提供者：
@@ -225,7 +232,6 @@ var agent = HarnessAgent.Create(chatClient, options =>
 - `FileMemoryProvider` — 基于文件的会话记忆
 - `FileAccessProvider` — 共享文件访问
 - `AgentSkillsProvider` — 技能发现和加载
-- `SubAgentsProvider` — 子 Agent 委派
 
 ## 自定义实现
 

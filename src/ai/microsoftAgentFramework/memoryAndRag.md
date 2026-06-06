@@ -19,23 +19,33 @@ tag:
 
 ## AIContextProvider（上下文注入）
 
-`AIContextProvider` 是上下文注入的抽象基类，提供两阶段生命周期：`InvokingAsync`（调用前）和 `InvokedAsync`（调用后）。
+`AIContextProvider` 是上下文注入的抽象基类，提供两阶段生命周期：
+- `ProvideAIContextAsync`（调用前）：返回额外的上下文（消息、工具、指令）
+- `StoreAIContextAsync`（调用后）：处理调用结果
 
 ```csharp
-using Microsoft.Agents.AI.Abstractions;
+using Microsoft.Agents.AI;
 
 public class TimeContextProvider : AIContextProvider
 {
-    public override async Task InvokingAsync(AgentRunContext context, IList<ChatMessage> messages, CancellationToken ct)
+    protected override ValueTask<AIContext> ProvideAIContextAsync(
+        InvokingContext context,
+        CancellationToken cancellationToken = default)
     {
-        // 调用前：注入额外消息、工具、上下文
-        messages.Add(new ChatMessage(ChatRole.System,
-            $"当前时间: {DateTime.Now:yyyy-MM-dd HH:mm:ss}"));
+        // 调用前：返回额外的上下文
+        return new ValueTask<AIContext>(new AIContext
+        {
+            Messages = [new ChatMessage(ChatRole.User,
+                $"当前时间: {DateTime.Now:yyyy-MM-dd HH:mm:ss}")]
+        });
     }
 
-    public override async Task InvokedAsync(AgentRunContext context, AgentResponse response, CancellationToken ct)
+    protected override ValueTask StoreAIContextAsync(
+        InvokedContext context,
+        CancellationToken cancellationToken = default)
     {
-        // 调用后：处理响应
+        // 调用后：处理响应（可选）
+        return default;
     }
 }
 ```
@@ -53,9 +63,9 @@ var provider = new MessageAIContextProvider(
 
 ```csharp
 // 通过 AIAgentBuilder
-var agent = new AIAgentBuilder()
+var agent = chatClientAgent.AsBuilder()
     .UseAIContextProviders(new TimeContextProvider())
-    .Build(chatClientAgent);
+    .Build();
 
 // 通过 ChatClientAgentOptions
 ```
@@ -80,12 +90,12 @@ var memoryProvider = new ChatHistoryMemoryProvider(chatHistoryProvider);
 | Mem0 服务 | 第三方记忆服务集成 |
 | Foundry 记忆 | Microsoft Foundry 记忆服务 |
 | 有界对话历史 | 带溢出控制的对话历史 |
-| FileMemoryProvider | 基于文件的会话记忆（v1.6.1 新增） |
+| FileMemoryProvider | 基于文件的会话记忆（v1.9.0 新增） |
 
 ### Mem0 记忆服务
 
 ```xml
-<PackageReference Include="Microsoft.Agents.AI.Mem0" Version="1.6.1" />
+<PackageReference Include="Microsoft.Agents.AI.Mem0" Version="1.9.0" />
 ```
 
 ```csharp
@@ -94,7 +104,7 @@ using Microsoft.Agents.AI.Mem0;
 // 集成 Mem0 记忆服务
 ```
 
-### FileMemoryProvider（v1.6.1 新增）
+### FileMemoryProvider（v1.9.0 新增）
 
 Harness 内置的基于文件的会话记忆提供者。
 
@@ -169,7 +179,7 @@ public class CustomRagProvider : AIContextProvider
 // Microsoft Foundry 内置向量存储
 ```
 
-### Foundry Memory Search（v1.6.1 新增）
+### Foundry Memory Search（v1.9.0 新增）
 
 非托管 Agent 也可通过 Foundry Toolbox MCP 使用 Foundry 记忆搜索。
 
@@ -198,7 +208,7 @@ var provider = new TextSearchProvider(
 
 ## 压缩管道（Compaction Pipeline）
 
-v1.6.1 大幅增强压缩管道，管理长对话的 token 消耗。
+v1.9.0 大幅增强压缩管道，管理长对话的 token 消耗。
 
 ### 压缩策略
 
