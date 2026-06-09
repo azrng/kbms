@@ -199,6 +199,13 @@ echo $env:ANTHROPIC_BASE_URL
 
 其他资料文档：https://docs.88code.org/ClaudeCode/Windows.html
 
+### Claude Code 上手指南 (claude-howto)
+
+一份比官方文档更实用的 Claude Code 教程，用 Mermaid 图画出工作流，附带可直接复制粘贴的模板（代码审查流水线、自定义代理团队等）。10 个模块，从 Slash Commands 到 Plugins，渐进式学习路径，总计 11-13 小时。教程类项目，不用安装——直接看仓库即可。
+
+- 仓库地址：https://github.com/luongnv89/claude-howto
+- 在线页面：https://luongnv.com/claude-howto/
+
 ### Claude Code Statusline Pro
 
 为 Claude Code 量身定制的智能状态栏系统。
@@ -274,6 +281,23 @@ npx ccsp@latest --preset MTU --theme classic
 npx ccsp@latest --preset BT --theme capsule
 ```
 
+### Career-Ops 求职助手
+
+一个基于 Claude Code 的求职系统，打包了 14 种技能模式，帮你批量投简历、写求职信、填申请表，还能生成 PDF 简历。装到你的 Claude Code 里就能用。
+
+- 仓库地址：https://github.com/santifer/career-ops
+
+## Personal AI Infrastructure (PAI)
+
+Daniel Miessler（Fabric 项目作者）打造的个人 AI 基础设施框架，帮你组织 AI 工具链、管理 prompt、让不同 AI 协作。不是装了就完事的工具，而是一套配置模板和最佳实践——如果你觉得"AI 工具太多，不知道怎么串起来"，这个项目就是答案。
+
+- 仓库地址：https://github.com/danielmiessler/Personal_AI_Infrastructure
+
+### 安装
+
+```bash
+curl -sSL https://ourpai.ai/install.sh | bash
+```
 
 ## Cursor
 
