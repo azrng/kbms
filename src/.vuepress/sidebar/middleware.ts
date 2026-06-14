@@ -8,105 +8,83 @@ export const middlewareSidebar = ["readme.md",
     collapsible: true,
     children: [
       "readme.md",
-      "spire.md",
-      "aspose.md",
-      "nsoup.md",
-      "towersoft_htmltoexcel.md",
-      "htmlagilitypack.md",
-      "anglesharp.md",
-      "puppeteersharp.md",
-      "npoi.md",
-      {
-        text: "NPOI",
-        prefix: "/middleware/office/npoi/",
-        collapsible: true,
-        children: [
-          "npoicaozuoexcel.md",
-          "npoipeizhi.md",
-          "npoiyiwen.md"]
-      },
-      "miniword.md",
-      "epplus.md",
-      "closedxml.md",
-      "miniexcel.md",
       "onlyoffice.md",
-      "epubHandle.md",
+      {
+        text: "Word",
+        prefix: "word/",
+        collapsible: true,
+        children: ["readme.md", "miniword.md", "epubHandle.md"]
+      },
+      {
+        text: "Excel",
+        prefix: "excel/",
+        collapsible: true,
+        children: ["readme.md", "npoi.md", "miniexcel.md", "epplus.md", "closedxml.md", "spire.md", "aspose.md"]
+      },
       {
         text: "PPT",
+        prefix: "ppt/",
         collapsible: true,
-        children: [
-          "/middleware/office/openxml.md",
-          "/middleware/office/ppt/shapeCrawler.md",
-        ]
+        children: ["readme.md", "openxml.md", "shapeCrawler.md"]
       },
       {
         text: "HTML",
+        prefix: "html/",
         collapsible: true,
-        children: [
-          "/middleware/office/html/readme.md",
-        ]
+        children: ["readme.md", "nsoup.md", "towersoft_htmltoexcel.md",
+          {
+            text: "HTML 解析",
+            collapsible: true,
+            children: [
+              "/shared/html-parsing/anglesharp.md",
+              "/shared/html-parsing/htmlagilitypack.md",
+              "/shared/html-parsing/puppeteersharp.md"
+            ]
+          }]
       },
       {
         text: "PDF",
-        prefix: "/middleware/office/pdf/",
+        prefix: "pdf/",
         collapsible: true,
-        children: [
-          "pdfSample.md",
-          "magick_net.md",
-          "ironpdf.md",
-          "questpdf.md",
-          "spire_pdf.md",
-          "aspose_pdf.md",
-          "itextsharp.md",
-          "itext7.md",
-          "haukcode_wkhtmltopdfdotnet.md",
-          "pdfsharp.md",
-          "dinkToPdf.md"
-        ]
+        children: ["pdfSample.md", "magick_net.md", "ironpdf.md", "questpdf.md", "spire_pdf.md", "aspose_pdf.md", "itextsharp.md", "itext7.md", "wkhtmltopdf.md", "pdfsharp.md", "dinkToPdf.md"]
       },
       {
         text: "CSV",
-        prefix: "/middleware/office/csv/",
+        prefix: "csv/",
         collapsible: true,
-        children: ["gaishu.md",
-          "csvhelper.md",
-          "csvfile.md"]
+        children: ["overview.md", "csvhelper.md", "csvfile.md"]
       },
       {
         text: "邮件",
-        prefix: "/middleware/office/youjian/",
+        prefix: "email/",
         collapsible: true,
-        children: ["mailkit.md",
-          "fluentemail.md"]
-      },
-      {
-        text: "YAPI",
-        prefix: "/middleware/office/yapi/",
-        collapsible: true,
-        children: ["readme.md",
-          "neiwangbushu.md"]
-      },
-      {
-        text: "IP",
-        prefix: "/middleware/office/ip/",
-        collapsible: true,
-        children: ["maxmind.md",
-          "ip2region.md"]
+        children: ["mailkit.md", "fluentemail.md"]
       },
       {
         text: "Markdown",
-        prefix: "/middleware/office/markdown/",
+        prefix: "markdown/",
         collapsible: true,
-        children: ["markdig.md",
-          "markdownsharp.md"]
+        children: ["markdig.md", "markdownsharp.md"]
       },
       {
         text: "文本对比",
-        prefix: "/middleware/office/wenbenduibi/",
+        prefix: "textDiff/",
         collapsible: true,
-        children: ["diffplex.md",
-          "htmldiff_net.md"]
-      }]
+        children: ["diffplex.md", "htmldiff_net.md"]
+      },
+      {
+        text: "YAPI",
+        prefix: "yapi/",
+        collapsible: true,
+        children: ["readme.md", "internalDeploy.md"]
+      },
+      {
+        text: "IP",
+        prefix: "ip/",
+        collapsible: true,
+        children: ["maxmind.md", "ip2region.md"]
+      }
+    ]
   },
   {
     text: "仓库",
@@ -401,11 +379,17 @@ export const middlewareSidebar = ["readme.md",
     collapsible: true,
     children: ["readme.md",
       "fuzhugongju.md",
-      "anglesharp.md",
-      "htmlagilitypack.md",
-      "puppeteersharp.md",
       "sample.md",
-      "commonNuget.md"]
+      "commonNuget.md",
+      {
+        text: "HTML 解析",
+        collapsible: true,
+        children: [
+          "/shared/html-parsing/anglesharp.md",
+          "/shared/html-parsing/htmlagilitypack.md",
+          "/shared/html-parsing/puppeteersharp.md"
+        ]
+      }]
   },
   "zhifuzujian.md",
   {
