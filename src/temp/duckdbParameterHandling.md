@@ -296,7 +296,7 @@ DuckDB 支持以下参数占位符：
 | `$1, $2, ...` | 显式位置编号 | `WHERE status = $1 AND amount >= $2` |
 | `$name` | 命名参数 | `WHERE status = $status` |
 
-下面三种是 DuckDB.NET / Dapper 的参数绑定语法，但在当前 Quack v1.5.3 的远端查询场景里有一个重要限制：如果查询必须通过 `quack_query_by_name(alias, sql)` 才能正确执行，外层 `DuckDBParameter` 不会传入内层 SQL。也就是说，下面示例适用于本地 DuckDB 查询，或适用于已经由封装层正确处理下推与参数转换的 Quack 查询；不要直接把它们套到 `quack_query_by_name` 内层 SQL 里。
+下面三种是 DuckDB.NET / Dapper 的参数绑定语法，但在当前 Quack v1.5.3 的远端查询场景里有一个重要限制：如果查询必须通过 `quack_query_by_name(alias, sql)` 才能正确执行，外层 `DuckDBParameter` 不会传入内层 SQL。也就是说，下面示例适用于本地 DuckDB 查询；不要直接把它们套到 `quack_query_by_name` 内层 SQL 里。
 
 ### 2. 方式 A：DuckDB 原生 `?` 位置参数（推荐学习）
 
@@ -361,7 +361,7 @@ using var reader = cmd.ExecuteReader();
 
 Dapper 提供了一种 **pseudo-positional parameters** 语法：用 `?name?`（前后各一个 `?`）。这是 Dapper 的参数重写特性，不是 DuckDB SQL 自身的占位符语法。
 
-注意：当前实测环境中，`connection.Query<T>()` 直接执行 `FROM source.orders WHERE ... ?status? ...` 没有跑通，报 `Values were not provided for the following prepared statement parameters`。因此不要把它作为“原生 Quack 直连必然可用”的写法；如果项目已经有封装层，应以封装层实测通过的 `@paramName -> ? / $1` 转换为准。
+注意：当前实测环境中，`connection.Query<T>()` 直接执行 `FROM source.orders WHERE ... ?status? ...` 没有跑通，报 `Values were not provided for the following prepared statement parameters`。因此不要把它作为“原生 Quack 直连必然可用”的写法。
 
 ```csharp
 using Dapper;
@@ -389,7 +389,7 @@ foreach (var o in orders)
 - ✅ 可读性好，参数和值一一对应
 - ✅ Dapper 内部会按 SQL 中 `?name?` 的出现位置绑定对应参数值
 - ✅ 强类型映射 `Query<T>` 直接返回对象
-- ⚠️ 同名参数多次出现时，Dapper 会自动复用同一个值
+- ⚠️ 在 Dapper 本地参数重写语义中，同名参数多次出现时会复用同一个值；Quack 远端场景仍需实测
 - ⚠️ DTO 构造函数和属性映射要与查询列名匹配（详见下一章）
 
 ### 5. 三种方式的对比
@@ -399,19 +399,38 @@ foreach (var o in orders)
 | 性能 | 最直接 | 最直接 | Dapper 多一层映射，通常差异很小 |
 | 可读性 | 参数多时差 | 好 | 好 |
 | 强类型映射 | 需要手写 reader | 需要手写 reader | 自动 |
-| 多次复用同名参数 | 要 `Add` 多次 | 写一次即可 | 写一次即可 |
+| 多次复用同名参数 | 要 `Add` 多次 | 写一次即可 | Dapper 语义下写一次即可，Quack 远端需封装层验证 |
 | 适合场景 | 简单 SQL、性能敏感 | 原生 DuckDB.NET 业务查询 | Dapper DTO 投影 |
 
-### 6. Quack 场景下的推荐封装方式
+### 6. Quack 场景下的实测参数化结论
 
-在当前 Quack v1.5.3 实测环境里，推荐把查询入口封装起来，至少处理两件事：
+在当前 Quack v1.5.3 实测环境里：
 
-1. 对无参数 SQL，包装成 `select * from quack_query_by_name('<alias>', '<sql>')`，让远端直接解析完整 SQL。
-2. 对参数化 SQL，优先在封装层把业务输入校验为强类型值，再生成安全 SQL；如果必须保留 `@paramName` 风格，需要明确你的封装如何转换参数，并用真实服务验证。
+- `quack_query_by_name` 只支持两个参数：`quack_query_by_name(alias, sql)`。
+- `quack_query_by_name('remote', '... ? ...', value)` 不支持，会报函数签名不匹配。
+- 外层 `DuckDBParameter` 不会传给 `quack_query_by_name` 的内层 SQL。
+- 现有 `@paramName -> ? / $1` 转换如果仍走 attached table 查询，也会遇到 schema 下推丢失问题。
 
-示意：
+因此，当前可验证的做法是：对业务参数做强类型校验和 SQL literal 转义，然后生成完整远端 SQL，再交给 `quack_query_by_name`。这不是数据库层面的绑定参数，但比直接拼接用户输入安全；封装层必须只接受已校验类型，不允许把任意字符串当 SQL 片段拼进去。
+
+实测通过示例：
 
 ```csharp
+var status = SqlStringLiteral("completed");
+var minAmount = SqlDecimalLiteral(100.0m);
+var limit = SqlLimitLiteral(10);
+
+var remoteSql = $@"
+    SELECT order_id, user_id, order_status, order_amount
+    FROM source.orders
+    WHERE order_status = {status}
+      AND order_amount >= {minAmount}
+    LIMIT {limit}";
+
+using var cmd = connection.CreateCommand();
+cmd.CommandText = BuildQuackQueryByNameSql("remote", remoteSql);
+using var reader = cmd.ExecuteReader();
+
 static string BuildQuackQueryByNameSql(string alias, string sql)
 {
     return $"select * from quack_query_by_name('{EscapeSql(alias)}', '{EscapeSql(sql)}')";
@@ -420,6 +439,24 @@ static string BuildQuackQueryByNameSql(string alias, string sql)
 static string EscapeSql(string value)
 {
     return value.Replace("\\", "\\\\").Replace("'", "''");
+}
+
+static string SqlStringLiteral(string value)
+{
+    return "'" + value.Replace("'", "''") + "'";
+}
+
+static string SqlDecimalLiteral(decimal value)
+{
+    return value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+}
+
+static string SqlLimitLiteral(int value)
+{
+    if (value is < 0 or > 1000)
+        throw new ArgumentOutOfRangeException(nameof(value), "Limit must be between 0 and 1000.");
+
+    return value.ToString(System.Globalization.CultureInfo.InvariantCulture);
 }
 ```
 
@@ -688,14 +725,17 @@ using (var cmd = connection.CreateCommand())
 Console.WriteLine("\n--- 带过滤条件的远端查询（示例值已写入远端 SQL）---");
 using (var cmd = connection.CreateCommand())
 {
-    cmd.CommandText = @"
-        SELECT *
-        FROM quack_query_by_name('remote',
-            'SELECT order_id, order_status, order_amount
-             FROM source.orders
-             WHERE order_status = ''completed''
-               AND order_amount >= 50
-             LIMIT 5')";
+    var status = SqlStringLiteral("completed");
+    var minAmount = SqlDecimalLiteral(50.0m);
+    var limit = SqlLimitLiteral(5);
+    var remoteSql = $@"
+        SELECT order_id, order_status, order_amount
+        FROM source.orders
+        WHERE order_status = {status}
+          AND order_amount >= {minAmount}
+        LIMIT {limit}";
+
+    cmd.CommandText = BuildQuackQueryByNameSql("remote", remoteSql);
     using var reader = cmd.ExecuteReader();
     while (reader.Read())
         Console.WriteLine($"  {reader.GetInt64(0)} {reader.GetString(1)} {reader.GetDecimal(2)}");
@@ -732,6 +772,34 @@ static string GetQuackExtensionPath()
     if (!File.Exists(path))
         throw new FileNotFoundException($"未找到 quack 扩展: {path}");
     return path.Replace("\\", "/").Replace("'", "''");
+}
+
+static string BuildQuackQueryByNameSql(string alias, string sql)
+{
+    return $"select * from quack_query_by_name('{EscapeSql(alias)}', '{EscapeSql(sql)}')";
+}
+
+static string EscapeSql(string value)
+{
+    return value.Replace("\\", "\\\\").Replace("'", "''");
+}
+
+static string SqlStringLiteral(string value)
+{
+    return "'" + value.Replace("'", "''") + "'";
+}
+
+static string SqlDecimalLiteral(decimal value)
+{
+    return value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+}
+
+static string SqlLimitLiteral(int value)
+{
+    if (value is < 0 or > 1000)
+        throw new ArgumentOutOfRangeException(nameof(value), "Limit must be between 0 and 1000.");
+
+    return value.ToString(System.Globalization.CultureInfo.InvariantCulture);
 }
 
 ```
