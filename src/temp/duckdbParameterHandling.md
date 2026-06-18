@@ -78,13 +78,13 @@ Quack 是 DuckDB 的**远程协议扩展**（loadable extension）。DuckDB 本�
 ```xml
 <ItemGroup>
     <!-- ADO.NET Provider + 自带 native DuckDB 引擎 -->
-    <PackageReference Include="DuckDB.NET.Data.Full" Version="1.5.3"/>
+    <PackageReference Include="DuckDB.NET.Data.Full" Version="{duckdb-net-version}"/>
     <!-- 可选：Dapper，用于强类型映射和 ?name? 伪位置参数 -->
-    <PackageReference Include="Dapper" Version="2.1.35"/>
+    <PackageReference Include="Dapper" Version="{dapper-version}"/>
 </ItemGroup>
 ```
 
-> ⚠️ `DuckDB.NET.Data.Full 1.5.3` 目标框架是 `net8.0`，可用于 `net8.0` 及更高版本。如果你建的是 `net6.0` 项目，NuGet 还原会报兼容错误。
+> 将 `{duckdb-net-version}` / `{dapper-version}` 替换为项目实际使用的 NuGet 版本。示例按 `DuckDB.NET.Data.Full 1.5.x` 说明，其目标框架是 `net8.0`，可用于 `net8.0` 及更高版本。
 
 ### 2. 目标框架
 
@@ -105,14 +105,20 @@ YourApp/
 ├── YourApp.csproj
 ├── Program.cs
 └── extensions/
-    └── v1.5.3/
+    └── {duckdb-version}/
         ├── windows_amd64/
         │   └── quack.duckdb_extension
         ├── linux_amd64/
         │   └── quack.duckdb_extension
-        └── linux_arm64/
+        ├── linux_arm64/
+        │   └── quack.duckdb_extension
+        ├── osx_amd64/
+        │   └── quack.duckdb_extension
+        └── osx_arm64/
             └── quack.duckdb_extension
 ```
+
+> 这不是 DuckDB 强制规定的目录结构，只是应用内分发扩展文件的一种约定。关键是运行时能根据 DuckDB / Quack 扩展版本、操作系统和 CPU 架构定位到正确的 `.duckdb_extension` 文件。若 Quack 当前未提供某个平台的扩展文件，就不要在目录示例中放该平台，代码也应抛出清晰错误。
 
 **csproj 里声明为 Content，构建时复制到输出目录**：
 
@@ -129,7 +135,7 @@ YourApp/
 
 ### 4. 运行时探测扩展路径
 
-DuckDB 的 `INSTALL '<path>'` 接受一个**文件系统绝对路径**。你需要根据当前平台拼出对应路径：
+如果扩展文件已经随应用分发到本地，DuckDB 可以通过 `LOAD '<path>'` 从显式路径加载。你需要根据当前平台拼出对应路径：
 
 ```csharp
 using System.Runtime.InteropServices;
@@ -147,7 +153,8 @@ static string GetQuackExtensionPath()
                 : RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? $"osx_{architecture}"
                 : throw new PlatformNotSupportedException("不支持的平台");
 
-    var path = Path.Combine(AppContext.BaseDirectory, "extensions", "v1.5.3", platform, "quack.duckdb_extension");
+    var duckdbVersion = "{duckdb-version}";
+    var path = Path.Combine(AppContext.BaseDirectory, "extensions", duckdbVersion, platform, "quack.duckdb_extension");
 
     if (!File.Exists(path))
         throw new FileNotFoundException($"未找到 quack 扩展文件: {path}");
@@ -177,16 +184,12 @@ const string QuackToken = "<your-token>";
 using var connection = new DuckDBConnection("Data Source=:memory:");
 connection.Open();
 
-// === Step 2：INSTALL quack 扩展 ===
-// 把扩展二进制加载进 DuckDB native engine
+// === Step 2：LOAD quack 扩展 ===
+// 从本地显式路径加载扩展，并注册 ATTACH TYPE = quack
 var extPath = GetQuackExtensionPath();
-ExecuteScalar($"INSTALL '{extPath}';");
-
-// === Step 3：LOAD quack 扩展 ===
-// 注册 ATTACH TYPE = quack 这个新的连接类型
 ExecuteScalar($"LOAD '{extPath}';");
 
-// === Step 4：ATTACH 远程服务端，并切换默认 database ===
+// === Step 3：ATTACH 远程服务端，并切换默认 database ===
 ExecuteScalar($"ATTACH 'quack:{QuackHost}:{QuackPort}' AS remote " +
               $"(TYPE quack, TOKEN '{QuackToken}', DISABLE_SSL true);");
 ExecuteScalar("USE remote;");
@@ -208,10 +211,15 @@ void ExecuteScalar(string sql)
 | 步骤 | 作用 | 漏掉会怎样 |
 |---|---|---|
 | Step 1 `:memory:` | 起一个本地临时 DuckDB | 无 |
-| Step 2 `INSTALL` | 把 `.duckdb_extension` 文件内容加载到 native engine | Step 3 报"扩展未安装" |
-| Step 3 `LOAD` | 激活扩展，注册 `TYPE quack` 这个 ATTACH 类型 | Step 4 报"unknown ATTACH type: quack" |
-| Step 4 `ATTACH ... AS remote` | 建立到远程的连接，别名 `remote` | 查询时报"database remote does not exist" |
-| Step 4 `USE remote` | 把当前会话默认 database 切到 `remote` | `select * from main.orders` 实际查的是本地 `:memory:` 的 `main.orders`，报 `Table with name orders does not exist` |
+| Step 2 `LOAD '<path>'` | 从本地文件加载扩展，注册 `TYPE quack` | Step 3 报"unknown ATTACH type: quack" |
+| Step 3 `ATTACH ... AS remote` | 建立到远程的连接，别名 `remote` | 查询时报"database remote does not exist" |
+| Step 3 `USE remote` | 把当前会话默认 database 切到 `remote` | `select * from main.orders` 实际查的是本地 `:memory:` 的 `main.orders`，报 `Table with name orders does not exist` |
+
+> 如果扩展不在本地，而是来自 DuckDB extension repository，才考虑 `INSTALL quack; LOAD quack;` 这类安装后加载流程。本文采用“应用随包分发本地扩展文件”的场景，所以只使用 `LOAD '<path>'`。
+
+### SSL 选项
+
+示例中的 `DISABLE_SSL true` 只适合内网、测试环境或服务端明确未启用 TLS 的场景。生产环境应优先启用 TLS，并按 Quack 服务端实际配置移除 `DISABLE_SSL true` 或改用服务端要求的安全连接参数。不要为了绕过证书问题在生产环境长期关闭 SSL。
 
 ---
 
@@ -329,7 +337,7 @@ using var reader = cmd.ExecuteReader();
 
 ### 4. 方式 C：Dapper 的 `?name?` 伪位置参数
 
-Dapper 提供了一种**伪位置参数语法**：用 `?name?`（前后各一个 `?`）。如果你已经在项目中使用 Dapper，可以继续使用这种写法做 DTO 映射。
+Dapper 提供了一种 **pseudo-positional parameters** 语法：用 `?name?`（前后各一个 `?`）。这是 Dapper 的参数重写特性，不是 DuckDB SQL 自身的占位符语法。如果你已经在项目中使用 Dapper，可以继续使用这种写法做 DTO 映射。
 
 ```csharp
 using Dapper;
@@ -442,7 +450,7 @@ private sealed class OrderDto
 
 ## 八、SQL 方言陷阱：三段式列引用
 
-DuckDB 在解析 `FROM source.orders` 后，可用的候选表名是 `orders`，**不是** `source.orders`。
+有些上游 SQL 生成器会输出 `schema.table.column` 形式的三段式列引用。DuckDB 在部分查询场景下会把 `source.orders` 作为 schema + table 解析，但在列限定符里继续写 `source.orders.created_at` 可能触发绑定错误。这个问题与具体 DuckDB 版本、SQL 形态和是否经过 Quack 远端解析有关，建议在目标版本上实际验证。
 
 ```sql
 -- ✅ 表引用带 schema，列引用用短名
@@ -454,14 +462,14 @@ WHERE orders.created_at >= '2026-05-17';
 SELECT count(1)
 FROM source.orders
 WHERE source.orders.created_at >= '2026-05-17';
--- 错误：Binder Error: Referenced table "source.orders" not found!
--- Candidate tables: "orders"
+-- 可能出现 Binder Error，例如提示找不到 "source.orders" 这个表别名。
 ```
 
 **规则**：
 
 - `FROM schema.table` —— 保留 schema 前缀，定位到远端的 schema。
 - `WHERE/SELECT/ORDER BY` 里的列 —— 用 `table.column` 或 `column`，不要写 `schema.table.column`。
+- 更稳妥的写法是给表显式起别名，例如 `FROM source.orders AS o WHERE o.created_at >= ?`。
 
 如果你有上游系统生成的 SQL 用了三段式，需要在 .NET 侧做规范化；可以把这类逻辑封装成独立的 SQL normalizer，在查询进入 DuckDB 前统一处理。
 
@@ -475,13 +483,13 @@ WHERE source.orders.created_at >= '2026-05-17';
 
 **解决**：在 `ATTACH` 后立即 `USE remote;`。
 
-### 2. `Binder Error: Referenced table "source.orders" not found!`
+### 2. `Binder Error` 并提到 `source.orders` 或列限定符
 
 **原因**：用了三段式列引用（见上一章）。
 
-**解决**：条件里的列改成 `table.column` 或短名。
+**解决**：条件里的列改成 `table.column`、短名，或给表起别名后用 `alias.column`。
 
-### 3. `DuckDB.NET.Data.Full 1.5.3 与 net6.0 不兼容`
+### 3. `DuckDB.NET.Data.Full` 与 `net6.0` 不兼容
 
 **原因**：项目目标框架低于包所支持。
 
@@ -494,7 +502,7 @@ WHERE source.orders.created_at >= '2026-05-17';
 **解决**：
 
 - 检查 csproj 里有 `<Content Include="extensions\**\*" CopyToOutputDirectory="PreserveNewest"/>`。
-- 检查 `bin/<Config>/<TFM>/extensions/v1.5.3/<platform>/quack.duckdb_extension` 存在。
+- 检查 `bin/<Config>/<TFM>/extensions/{duckdb-version}/<platform>/quack.duckdb_extension` 存在。
 - 用 `AppContext.BaseDirectory` 而不是 `Directory.GetCurrentDirectory()`，避免当前目录跳到别处。
 
 ### 5. `Parser Error: syntax error at or near "@"`
@@ -510,7 +518,7 @@ WHERE source.orders.created_at >= '2026-05-17';
 **排查清单**：
 
 1. 应用实际连接串是什么？
-2. 是否已 `INSTALL` + `LOAD` quack 扩展？
+2. 是否已 `LOAD` quack 扩展？
 3. 是否已 `ATTACH` 远端？
 4. `ATTACH` 的 alias 是什么（默认 `remote`）？
 5. 是否已 `USE <alias>`？
@@ -522,11 +530,31 @@ WHERE source.orders.created_at >= '2026-05-17';
 
 ### 1. 复用连接，不要每次查询都新建
 
-`INSTALL/LOAD/ATTACH` 都有成本（毫秒到百毫秒级）。建议：
+`LOAD/ATTACH` 都有成本（毫秒到百毫秒级）。建议：
 
 - 在应用启动时执行一次，把 `DuckDBConnection` 作为**单例**保存。
 - 后续所有查询复用这条连接。
-- 多线程并发查询时，要么串行化访问，要么用连接池模式（DuckDB.NET 支持，但需要额外配置）。
+- 多线程并发查询时，不要假设同一个 `DuckDBConnection` 可以被多个线程随意共享。更稳妥的做法是串行化访问，或为并发工作单元创建独立连接并各自完成 `LOAD/ATTACH/USE` 初始化。
+
+### 连接初始化错误处理
+
+生产代码不要只把初始化 SQL 顺序写在主流程里，建议把连接初始化包成一个方法，并在异常里带上当前步骤，方便定位是扩展文件、LOAD、ATTACH、认证还是 `USE` 失败：
+
+```csharp
+static void ExecuteStep(DuckDBConnection connection, string stepName, string sql)
+{
+    try
+    {
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = sql;
+        cmd.ExecuteNonQuery();
+    }
+    catch (Exception ex)
+    {
+        throw new InvalidOperationException($"DuckDB 初始化失败：{stepName}", ex);
+    }
+}
+```
 
 ### 2. 避免 `SELECT *`
 
@@ -596,11 +624,10 @@ using var connection = new DuckDBConnection("Data Source=:memory:");
 connection.Open();
 
 var extPath = GetQuackExtensionPath();
-Execute("INSTALL '" + extPath + "';");
-Execute("LOAD '" + extPath + "';");
-Execute($"ATTACH 'quack:{QuackHost}:{QuackPort}' AS remote " +
-        $"(TYPE quack, TOKEN '{QuackToken}', DISABLE_SSL true);");
-Execute("USE remote;");
+ExecuteStep("LOAD quack extension", "LOAD '" + extPath + "';");
+ExecuteStep("ATTACH remote", $"ATTACH 'quack:{QuackHost}:{QuackPort}' AS remote " +
+                             $"(TYPE quack, TOKEN '{QuackToken}', DISABLE_SSL true);");
+ExecuteStep("USE remote", "USE remote;");
 
 Console.WriteLine("--- 基础查询 ---");
 using (var cmd = connection.CreateCommand())
@@ -630,11 +657,18 @@ var orders = connection.Query<OrderDto>(
 foreach (var o in orders)
     Console.WriteLine($"  {o.OrderId} {o.OrderStatus} {o.OrderAmount}");
 
-void Execute(string sql)
+void ExecuteStep(string stepName, string sql)
 {
-    using var cmd = connection.CreateCommand();
-    cmd.CommandText = sql;
-    cmd.ExecuteNonQuery();
+    try
+    {
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = sql;
+        cmd.ExecuteNonQuery();
+    }
+    catch (Exception ex)
+    {
+        throw new InvalidOperationException($"DuckDB 初始化失败：{stepName}", ex);
+    }
 }
 
 static string GetQuackExtensionPath()
@@ -645,9 +679,12 @@ static string GetQuackExtensionPath()
         ? $"windows_{arch}"
         : System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux)
             ? $"linux_{arch}"
-            : throw new PlatformNotSupportedException();
+            : System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.OSX)
+                ? $"osx_{arch}"
+                : throw new PlatformNotSupportedException();
 
-    var path = Path.Combine(AppContext.BaseDirectory, "extensions", "v1.5.3", os, "quack.duckdb_extension");
+    var duckdbVersion = "{duckdb-version}";
+    var path = Path.Combine(AppContext.BaseDirectory, "extensions", duckdbVersion, os, "quack.duckdb_extension");
     if (!File.Exists(path))
         throw new FileNotFoundException($"未找到 quack 扩展: {path}");
     return path.Replace("\\", "/").Replace("'", "''");
@@ -672,8 +709,8 @@ sealed class OrderDto
         <Nullable>enable</Nullable>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="DuckDB.NET.Data.Full" Version="1.5.3"/>
-        <PackageReference Include="Dapper" Version="2.1.35"/>
+        <PackageReference Include="DuckDB.NET.Data.Full" Version="{duckdb-net-version}"/>
+        <PackageReference Include="Dapper" Version="{dapper-version}"/>
     </ItemGroup>
     <ItemGroup>
         <Content Include="extensions\**\*" CopyToOutputDirectory="PreserveNewest"/>
@@ -687,7 +724,7 @@ sealed class OrderDto
 
 如果要把示例代码整理成生产可复用的组件，建议至少拆成这些职责：
 
-- **连接管理**：集中处理 `INSTALL` / `LOAD` / `ATTACH` / `USE`，避免每个查询重复初始化。
+- **连接管理**：集中处理 `LOAD` / `ATTACH` / `USE`，避免每个查询重复初始化。
 - **平台探测**：根据 OS 与 CPU 架构定位 `quack.duckdb_extension`。
 - **连接配置解析**：从配置或 secret 管理系统读取 host、port、token、alias、SSL 选项。
 - **SQL 方言规范化**：如上游 SQL 会生成三段式列引用，可在进入 DuckDB 前统一改写。
@@ -700,9 +737,7 @@ sealed class OrderDto
 ```text
 连接：DuckDBConnection("Data Source=:memory:")
        ↓
-      INSTALL '<ext_path>'     ← 加载 .duckdb_extension 二进制
-       ↓
-      LOAD '<ext_path>'        ← 激活扩展
+      LOAD '<ext_path>'        ← 从本地路径加载并激活扩展
        ↓
       ATTACH 'quack:host:port' AS remote (TYPE quack, TOKEN '...', DISABLE_SSL true)
        ↓
