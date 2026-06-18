@@ -15,7 +15,7 @@ tag:
   - 参数化查询
 ---
 
-> 面向首次接触 DuckDB / Quack 的 .NET 开发者。读完本文你能：在 .NET 项目里装好客户端依赖、连上一台远程 Quack DuckDB 服务、跑通基础查询和参数化查询、并能自己排查最常见的几类错误。
+> 面向首次接触 DuckDB / Quack 的 .NET 开发者。读完本文你能：在 .NET 项目里装好客户端依赖、连上一台远程 Quack DuckDB 服务、跑通基础查询，并理解为什么生产代码通常需要封装层处理 SQL 规范化和参数转换。
 
 ---
 
@@ -63,11 +63,13 @@ Quack 是 DuckDB 的**远程协议扩展**（loadable extension）。DuckDB 本�
 | 原生命名参数 | 依赖驱动实现 | ✅ `$paramName` |
 | 连接串 | `Server=...;Database=...;User Id=...` | 本地 `Data Source=:memory:`，远程用 `ATTACH` |
 | 默认 database | 连接串指定 | 本地默认 `:memory:`，需要 `USE <alias>` 切到远程 |
+| 远端查询 | 直接访问服务端表 | 当前 Quack v1.5.3 下，直接 `FROM source.orders` 可能下推失败，推荐通过封装层或 `quack_query_by_name` |
 
 最容易踩坑的两条：
 
 1. **DuckDB 不支持 `@paramName`**。直接写会语法错，应改用 `?`、`$1` 或 `$paramName`。
 2. **`ATTACH` 之后默认库还是本地 `:memory:`**。不 `USE remote`，就查不到远程表。
+3. **直接查询 attached table 不一定等价于远端执行原 SQL**。当前实测环境中，`SELECT ... FROM source.orders` 会在下推时丢失 schema，报 `Table with name orders does not exist`；可用 `quack_query_by_name(alias, sql)` 让远端解析 SQL。
 
 ---
 
@@ -79,7 +81,7 @@ Quack 是 DuckDB 的**远程协议扩展**（loadable extension）。DuckDB 本�
 <ItemGroup>
     <!-- ADO.NET Provider + 自带 native DuckDB 引擎 -->
     <PackageReference Include="DuckDB.NET.Data.Full" Version="{duckdb-net-version}"/>
-    <!-- 可选：Dapper，用于强类型映射和 ?name? 伪位置参数 -->
+    <!-- 可选：如果封装层要做强类型映射或 Dapper 参数重写，再引入 Dapper -->
     <PackageReference Include="Dapper" Version="{dapper-version}"/>
 </ItemGroup>
 ```
@@ -194,7 +196,7 @@ ExecuteScalar($"ATTACH 'quack:{QuackHost}:{QuackPort}' AS remote " +
               $"(TYPE quack, TOKEN '{QuackToken}', DISABLE_SSL true);");
 ExecuteScalar("USE remote;");
 
-// 现在可以查远程表了
+// 现在可以通过 quack_query_by_name 或封装层查询远端表了
 Console.WriteLine("连接成功");
 
 // 局部辅助方法：执行无返回结果的 SQL
@@ -225,12 +227,31 @@ void ExecuteScalar(string sql)
 
 ## 五、基础查询（无参数）
 
+当前 Quack v1.5.3 实测中，直接执行下面这种 attached table 查询可能失败：
+
+```sql
+SELECT order_id, user_id, order_status, order_amount
+FROM source.orders
+LIMIT 10;
+```
+
+典型错误是远端实际收到的查询丢失了 schema，变成 `FROM orders`：
+
+```text
+Invalid Input Error: Table with name orders does not exist!
+Did you mean "source.orders"?
+```
+
+更稳妥的方式是使用 Quack 扩展提供的 `quack_query_by_name(alias, sql)`，把完整 SQL 字符串交给远端解析：
+
 ```csharp
 using var cmd = connection.CreateCommand();
 cmd.CommandText = @"
-    SELECT order_id, user_id, order_status, order_amount
-    FROM source.orders
-    LIMIT 10;";
+    SELECT *
+    FROM quack_query_by_name('remote',
+        'SELECT order_id, user_id, order_status, order_amount
+         FROM source.orders
+         LIMIT 10')";
 
 using var reader = cmd.ExecuteReader();
 while (reader.Read())
@@ -250,6 +271,7 @@ while (reader.Read())
 - `ExecuteReader()` 返回 `DbDataReader`，可以用 `Read()` 逐行推进。
 - 用 `IsDBNull(i)` 检查 NULL，否则 `GetInt64` 等强类型方法会抛异常。
 - `using` 释放命令和 reader，避免资源泄漏。
+- `quack_query_by_name` 只接受 `(alias, sql)` 两个字符串参数；它不能接收外层 `DuckDBParameter` 并转发给内层 SQL。
 
 ---
 
@@ -274,11 +296,11 @@ DuckDB 支持以下参数占位符：
 | `$1, $2, ...` | 显式位置编号 | `WHERE status = $1 AND amount >= $2` |
 | `$name` | 命名参数 | `WHERE status = $status` |
 
-下面介绍三种实际可用的参数化写法。
+下面三种是 DuckDB.NET / Dapper 的参数绑定语法，但在当前 Quack v1.5.3 的远端查询场景里有一个重要限制：如果查询必须通过 `quack_query_by_name(alias, sql)` 才能正确执行，外层 `DuckDBParameter` 不会传入内层 SQL。也就是说，下面示例适用于本地 DuckDB 查询，或适用于已经由封装层正确处理下推与参数转换的 Quack 查询；不要直接把它们套到 `quack_query_by_name` 内层 SQL 里。
 
 ### 2. 方式 A：DuckDB 原生 `?` 位置参数（推荐学习）
 
-最直接、最贴近 native 引擎行为的写法。
+最直接、最贴近 native 引擎行为的写法。注意：当前实测中，这种写法直接查询 `source.orders` 会因为 Quack 下推丢失 schema 而失败，需要封装层处理。
 
 ```csharp
 using var cmd = connection.CreateCommand();
@@ -310,7 +332,7 @@ while (reader.Read())
 
 ### 3. 方式 B：DuckDB 原生 `$name` 命名参数（推荐日常）
 
-如果不想依赖 `?` 的位置顺序，可以使用 DuckDB 原生 `$name` 命名参数：
+如果不想依赖 `?` 的位置顺序，可以使用 DuckDB 原生 `$name` 命名参数。注意：当前实测中，这种写法直接查询 `source.orders` 同样会因为 Quack 下推丢失 schema 而失败，需要封装层处理。
 
 ```csharp
 using var cmd = connection.CreateCommand();
@@ -337,7 +359,9 @@ using var reader = cmd.ExecuteReader();
 
 ### 4. 方式 C：Dapper 的 `?name?` 伪位置参数
 
-Dapper 提供了一种 **pseudo-positional parameters** 语法：用 `?name?`（前后各一个 `?`）。这是 Dapper 的参数重写特性，不是 DuckDB SQL 自身的占位符语法。如果你已经在项目中使用 Dapper，可以继续使用这种写法做 DTO 映射。
+Dapper 提供了一种 **pseudo-positional parameters** 语法：用 `?name?`（前后各一个 `?`）。这是 Dapper 的参数重写特性，不是 DuckDB SQL 自身的占位符语法。
+
+注意：当前实测环境中，`connection.Query<T>()` 直接执行 `FROM source.orders WHERE ... ?status? ...` 没有跑通，报 `Values were not provided for the following prepared statement parameters`。因此不要把它作为“原生 Quack 直连必然可用”的写法；如果项目已经有封装层，应以封装层实测通过的 `@paramName -> ? / $1` 转换为准。
 
 ```csharp
 using Dapper;
@@ -378,7 +402,28 @@ foreach (var o in orders)
 | 多次复用同名参数 | 要 `Add` 多次 | 写一次即可 | 写一次即可 |
 | 适合场景 | 简单 SQL、性能敏感 | 原生 DuckDB.NET 业务查询 | Dapper DTO 投影 |
 
-### 6. 错误对比：千万别这么写
+### 6. Quack 场景下的推荐封装方式
+
+在当前 Quack v1.5.3 实测环境里，推荐把查询入口封装起来，至少处理两件事：
+
+1. 对无参数 SQL，包装成 `select * from quack_query_by_name('<alias>', '<sql>')`，让远端直接解析完整 SQL。
+2. 对参数化 SQL，优先在封装层把业务输入校验为强类型值，再生成安全 SQL；如果必须保留 `@paramName` 风格，需要明确你的封装如何转换参数，并用真实服务验证。
+
+示意：
+
+```csharp
+static string BuildQuackQueryByNameSql(string alias, string sql)
+{
+    return $"select * from quack_query_by_name('{EscapeSql(alias)}', '{EscapeSql(sql)}')";
+}
+
+static string EscapeSql(string value)
+{
+    return value.Replace("\\", "\\\\").Replace("'", "''");
+}
+```
+
+### 7. 错误对比：千万别这么写
 
 ```csharp
 // ❌ 错误 1：字符串拼接（SQL 注入风险）
@@ -465,11 +510,12 @@ WHERE source.orders.created_at >= '2026-05-17';
 -- 可能出现 Binder Error，例如提示找不到 "source.orders" 这个表别名。
 ```
 
-**规则**：
+实测结论：
 
-- `FROM schema.table` —— 保留 schema 前缀，定位到远端的 schema。
-- `WHERE/SELECT/ORDER BY` 里的列 —— 用 `table.column` 或 `column`，不要写 `schema.table.column`。
-- 更稳妥的写法是给表显式起别名，例如 `FROM source.orders AS o WHERE o.created_at >= ?`。
+- 直接 attached table 查询时，`FROM source.orders` 在当前环境下会下推成 `FROM orders` 并失败。
+- `WHERE source.orders.created_at ...` 会触发 Binder Error。
+- 使用 `quack_query_by_name('remote', 'SELECT ... FROM source.orders ...')` 可以让远端正确识别 `source.orders`。
+- 如果要改写三段式列引用，应在封装层做 SQL normalizer，并用目标版本实测。
 
 如果你有上游系统生成的 SQL 用了三段式，需要在 .NET 侧做规范化；可以把这类逻辑封装成独立的 SQL normalizer，在查询进入 DuckDB 前统一处理。
 
@@ -479,9 +525,9 @@ WHERE source.orders.created_at >= '2026-05-17';
 
 ### 1. `Catalog Error: Table with name orders does not exist!`
 
-**原因**：只 `ATTACH` 了远程，但没 `USE remote`，当前默认 database 还是本地 `:memory:`。
+**原因**：可能是只 `ATTACH` 了远程但没 `USE remote`；也可能是 Quack 下推时把 `source.orders` 改写成了 `orders`。
 
-**解决**：在 `ATTACH` 后立即 `USE remote;`。
+**解决**：先确认 `ATTACH` 后已执行 `USE remote;`。如果仍失败，改用 `quack_query_by_name('remote', 'SELECT ... FROM source.orders ...')` 或项目封装层。
 
 ### 2. `Binder Error` 并提到 `source.orders` 或列限定符
 
@@ -509,7 +555,7 @@ WHERE source.orders.created_at >= '2026-05-17';
 
 **原因**：SQL 里用了 `@paramName`。
 
-**解决**：换成 `?` 位置参数、`$name` 命名参数或 Dapper `?name?`。
+**解决**：本地 DuckDB 查询可换成 `?` 位置参数、`$name` 命名参数或 Dapper `?name?`。Quack 远端查询要结合封装层实测，不能假设外层参数会传入 `quack_query_by_name` 的内层 SQL。
 
 ### 6. DataGrip 能执行，但 .NET 客户端不能
 
@@ -522,7 +568,7 @@ WHERE source.orders.created_at >= '2026-05-17';
 3. 是否已 `ATTACH` 远端？
 4. `ATTACH` 的 alias 是什么（默认 `remote`）？
 5. 是否已 `USE <alias>`？
-6. SQL 里的表/列引用是否符合上一章的三段式规则？
+6. 直接 attached table 是否触发了 schema 丢失？可用 `quack_query_by_name` 验证同一 SQL 是否能跑通。
 
 ---
 
@@ -577,9 +623,9 @@ while (reader.Read())
 }
 ```
 
-### 4. 把过滤、聚合推到远端
+### 4. 优先让过滤、聚合在远端执行
 
-DuckDB + Quack 会自动把 SQL 尽量推送到远端执行。但你需要写"可下推"的 SQL：
+目标是让过滤、聚合、排序和 `LIMIT` 尽量在远端执行，减少传输数据量。但当前 Quack v1.5.3 实测说明，直接 attached table 查询可能在下推时丢失 schema；因此需要用 `quack_query_by_name` 或封装层验证实际执行路径。
 
 ```sql
 -- ✅ 远端执行：过滤、聚合、limit 都在远端
@@ -594,7 +640,7 @@ LIMIT 100;
 
 ### 5. SQL 注入安全
 
-`?` 位置参数、`$name` 命名参数和 `?name?` 伪位置参数都是**真正的参数化**，值永远不会被字符串拼接进 SQL。
+`?` 位置参数、`$name` 命名参数和 `?name?` 伪位置参数在 DuckDB.NET / Dapper 层面都是真正的参数化，值不会被字符串拼接进 SQL。但如果你把 SQL 作为字符串传给 `quack_query_by_name(alias, sql)`，内层 SQL 不能再接收外层参数，此时必须由封装层负责安全生成 SQL，不能直接拼接用户输入。
 
 ```csharp
 // ✅ 安全：参数值由 native 引擎绑定
@@ -614,8 +660,6 @@ cmd.CommandText = $"WHERE name = '{userInput}'";
 
 ```csharp
 using DuckDB.NET.Data;
-using Dapper;
-
 const string QuackHost = "<quack-host>";
 const int QuackPort = 9494;
 const string QuackToken = "<your-token>";
@@ -632,30 +676,30 @@ ExecuteStep("USE remote", "USE remote;");
 Console.WriteLine("--- 基础查询 ---");
 using (var cmd = connection.CreateCommand())
 {
-    cmd.CommandText = "SELECT order_id, order_status FROM source.orders LIMIT 5;";
+    cmd.CommandText = @"
+        SELECT *
+        FROM quack_query_by_name('remote',
+            'SELECT order_id, order_status FROM source.orders LIMIT 5')";
     using var reader = cmd.ExecuteReader();
     while (reader.Read())
         Console.WriteLine($"  {reader.GetInt64(0)} {reader.GetString(1)}");
 }
 
-Console.WriteLine("\n--- 参数化查询（原生 ?）---");
+Console.WriteLine("\n--- 带过滤条件的远端查询（示例值已写入远端 SQL）---");
 using (var cmd = connection.CreateCommand())
 {
-    cmd.CommandText = "SELECT order_id, order_status FROM source.orders WHERE order_status = ? LIMIT ?;";
-    cmd.Parameters.Add(new DuckDBParameter { Value = "completed" });
-    cmd.Parameters.Add(new DuckDBParameter { Value = 5 });
+    cmd.CommandText = @"
+        SELECT *
+        FROM quack_query_by_name('remote',
+            'SELECT order_id, order_status, order_amount
+             FROM source.orders
+             WHERE order_status = ''completed''
+               AND order_amount >= 50
+             LIMIT 5')";
     using var reader = cmd.ExecuteReader();
     while (reader.Read())
-        Console.WriteLine($"  {reader.GetInt64(0)} {reader.GetString(1)}");
+        Console.WriteLine($"  {reader.GetInt64(0)} {reader.GetString(1)} {reader.GetDecimal(2)}");
 }
-
-Console.WriteLine("\n--- 参数化查询（Dapper ?name?）---");
-var orders = connection.Query<OrderDto>(
-    "SELECT order_id, order_status, order_amount FROM source.orders " +
-    "WHERE order_status = ?status? AND order_amount >= ?minAmount? LIMIT ?limit?;",
-    new { status = "completed", minAmount = 50.0m, limit = 5 });
-foreach (var o in orders)
-    Console.WriteLine($"  {o.OrderId} {o.OrderStatus} {o.OrderAmount}");
 
 void ExecuteStep(string stepName, string sql)
 {
@@ -690,12 +734,6 @@ static string GetQuackExtensionPath()
     return path.Replace("\\", "/").Replace("'", "''");
 }
 
-sealed class OrderDto
-{
-    public long OrderId { get; set; }
-    public string OrderStatus { get; set; } = "";
-    public decimal OrderAmount { get; set; }
-}
 ```
 
 **`YourApp.csproj`**：
@@ -710,6 +748,7 @@ sealed class OrderDto
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="DuckDB.NET.Data.Full" Version="{duckdb-net-version}"/>
+        <!-- 如果完整示例不使用 Dapper，可删除该依赖 -->
         <PackageReference Include="Dapper" Version="{dapper-version}"/>
     </ItemGroup>
     <ItemGroup>
@@ -743,8 +782,7 @@ sealed class OrderDto
        ↓
       USE remote               ← 切默认 database，否则查不到远程表
        ↓
-      查询：cmd.CommandText = "SELECT ... WHERE col = ?"
-            cmd.Parameters.Add(new DuckDBParameter { Value = ... })
+      查询：cmd.CommandText = "SELECT * FROM quack_query_by_name('remote', '<remote sql>')"
             using var reader = cmd.ExecuteReader()
 ```
 
@@ -756,3 +794,5 @@ sealed class OrderDto
 | 命名参数 | `WHERE c = $name` | `DuckDBParameter.ParameterName = "name"` |
 | 命名（Dapper） | `WHERE c = ?name?` | `connection.Query<T>(sql, new { name = ... })` |
 | ❌ 不要用 | `WHERE c = @name` | DuckDB 不识别 |
+
+> 上表是 DuckDB.NET / Dapper 参数语法速查。若远端查询必须通过 `quack_query_by_name` 执行，内层 SQL 不能直接使用外层参数绑定。
