@@ -96,9 +96,11 @@ Quack 是 DuckDB 的**远程协议扩展**（loadable extension）。DuckDB 本�
 </PropertyGroup>
 ```
 
-### 3. quack 扩展文件
+### 3. quack / httpfs 扩展文件
 
 DuckDB 的 native 引擎只是"裸的"数据库，`quack.duckdb_extension` 是独立的可加载扩展。你需要把它放到运行时能找到的位置。
+
+如果应用运行在不能访问外网的内网环境，还需要提前下载并随包分发 `httpfs.duckdb_extension`。原因是 Quack / DuckDB 在访问远端资源或扩展依赖时可能需要 `httpfs`，而内网环境无法在运行时通过 DuckDB extension repository 自动拉取扩展文件。不要依赖 `INSTALL httpfs;` 在生产内网环境临时下载。
 
 **目录结构**（推荐）：
 
@@ -109,15 +111,20 @@ YourApp/
 └── extensions/
     └── {duckdb-version}/
         ├── windows_amd64/
-        │   └── quack.duckdb_extension
+        │   ├── quack.duckdb_extension
+        │   └── httpfs.duckdb_extension
         ├── linux_amd64/
-        │   └── quack.duckdb_extension
+        │   ├── quack.duckdb_extension
+        │   └── httpfs.duckdb_extension
         ├── linux_arm64/
-        │   └── quack.duckdb_extension
+        │   ├── quack.duckdb_extension
+        │   └── httpfs.duckdb_extension
         ├── osx_amd64/
-        │   └── quack.duckdb_extension
+        │   ├── quack.duckdb_extension
+        │   └── httpfs.duckdb_extension
         └── osx_arm64/
-            └── quack.duckdb_extension
+            ├── quack.duckdb_extension
+            └── httpfs.duckdb_extension
 ```
 
 > 这不是 DuckDB 强制规定的目录结构，只是应用内分发扩展文件的一种约定。关键是运行时能根据 DuckDB / Quack 扩展版本、操作系统和 CPU 架构定位到正确的 `.duckdb_extension` 文件。若 Quack 当前未提供某个平台的扩展文件，就不要在目录示例中放该平台，代码也应抛出清晰错误。
@@ -133,6 +140,7 @@ YourApp/
 **扩展文件从哪里来**：
 
 - 如果你的项目已经随包或内部组件提供对应版本的 `quack.duckdb_extension`，可直接复制到上面的 `extensions/` 目录。
+- `httpfs.duckdb_extension` 要和当前 DuckDB native engine 的版本、平台、CPU 架构匹配。内网部署前应在可联网环境下载好，再复制到制品或内部制品库。
 - 也可以从 DuckDB extension repository 获取，或自行编译。
 
 ### 4. 运行时探测扩展路径
@@ -142,7 +150,7 @@ YourApp/
 ```csharp
 using System.Runtime.InteropServices;
 
-static string GetQuackExtensionPath()
+static string GetDuckDbExtensionPath(string extensionName)
 {
     var architecture = RuntimeInformation.ProcessArchitecture switch
     {
@@ -156,10 +164,11 @@ static string GetQuackExtensionPath()
                 : throw new PlatformNotSupportedException("不支持的平台");
 
     var duckdbVersion = "{duckdb-version}";
-    var path = Path.Combine(AppContext.BaseDirectory, "extensions", duckdbVersion, platform, "quack.duckdb_extension");
+    var fileName = extensionName + ".duckdb_extension";
+    var path = Path.Combine(AppContext.BaseDirectory, "extensions", duckdbVersion, platform, fileName);
 
     if (!File.Exists(path))
-        throw new FileNotFoundException($"未找到 quack 扩展文件: {path}");
+        throw new FileNotFoundException($"未找到 DuckDB 扩展文件: {path}");
 
     // DuckDB 路径用正斜杠更稳；单引号需要转义
     return path.Replace("\\", "/").Replace("'", "''");
@@ -186,9 +195,10 @@ const string QuackToken = "<your-token>";
 using var connection = new DuckDBConnection("Data Source=:memory:");
 connection.Open();
 
-// === Step 2：LOAD quack 扩展 ===
-// 从本地显式路径加载扩展，并注册 ATTACH TYPE = quack
-var extPath = GetQuackExtensionPath();
+// === Step 2：LOAD 扩展 ===
+// 内网环境建议先从本地显式路径加载 httpfs，再加载 quack
+ExecuteScalar($"LOAD '{GetDuckDbExtensionPath("httpfs")}';");
+var extPath = GetDuckDbExtensionPath("quack");
 ExecuteScalar($"LOAD '{extPath}';");
 
 // === Step 3：ATTACH 远程服务端，并切换默认 database ===
@@ -218,6 +228,8 @@ void ExecuteScalar(string sql)
 | Step 3 `USE remote` | 把当前会话默认 database 切到 `remote` | `select * from main.orders` 实际查的是本地 `:memory:` 的 `main.orders`，报 `Table with name orders does not exist` |
 
 > 如果扩展不在本地，而是来自 DuckDB extension repository，才考虑 `INSTALL quack; LOAD quack;` 这类安装后加载流程。本文采用“应用随包分发本地扩展文件”的场景，所以只使用 `LOAD '<path>'`。
+
+> 内网环境同理，不建议在运行时执行 `INSTALL httpfs;`。应提前把匹配版本和平台的 `httpfs.duckdb_extension` 放到本地扩展目录，然后通过 `LOAD '<path>'` 加载。
 
 ### SSL 选项
 
@@ -704,8 +716,8 @@ const string QuackToken = "<your-token>";
 using var connection = new DuckDBConnection("Data Source=:memory:");
 connection.Open();
 
-var extPath = GetQuackExtensionPath();
-ExecuteStep("LOAD quack extension", "LOAD '" + extPath + "';");
+ExecuteStep("LOAD httpfs extension", "LOAD '" + GetDuckDbExtensionPath("httpfs") + "';");
+ExecuteStep("LOAD quack extension", "LOAD '" + GetDuckDbExtensionPath("quack") + "';");
 ExecuteStep("ATTACH remote", $"ATTACH 'quack:{QuackHost}:{QuackPort}' AS remote " +
                              $"(TYPE quack, TOKEN '{QuackToken}', DISABLE_SSL true);");
 ExecuteStep("USE remote", "USE remote;");
@@ -755,7 +767,7 @@ void ExecuteStep(string stepName, string sql)
     }
 }
 
-static string GetQuackExtensionPath()
+static string GetDuckDbExtensionPath(string extensionName)
 {
     var arch = System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture
         is System.Runtime.InteropServices.Architecture.Arm64 ? "arm64" : "amd64";
@@ -768,9 +780,10 @@ static string GetQuackExtensionPath()
                 : throw new PlatformNotSupportedException();
 
     var duckdbVersion = "{duckdb-version}";
-    var path = Path.Combine(AppContext.BaseDirectory, "extensions", duckdbVersion, os, "quack.duckdb_extension");
+    var fileName = extensionName + ".duckdb_extension";
+    var path = Path.Combine(AppContext.BaseDirectory, "extensions", duckdbVersion, os, fileName);
     if (!File.Exists(path))
-        throw new FileNotFoundException($"未找到 quack 扩展: {path}");
+        throw new FileNotFoundException($"未找到 DuckDB 扩展: {path}");
     return path.Replace("\\", "/").Replace("'", "''");
 }
 
