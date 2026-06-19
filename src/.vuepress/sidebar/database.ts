@@ -12,7 +12,8 @@ export const dataBaseSidebar = [
       "index.md",
       "transaction.md",
       "executeOrder.md",
-      "dbPool.md"
+      "dbPool.md",
+      "masterSlaveFailover.md"
     ]
   },
   {
