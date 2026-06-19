@@ -1277,6 +1277,7 @@ export const dotnetSidebar = [
           "chinaEncrypt.md"
         ]
       },
-      "downloader.md"
+      "downloader.md",
+      "encodingDetect.md"
     ]
   }];
