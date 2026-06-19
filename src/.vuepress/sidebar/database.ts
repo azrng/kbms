@@ -72,63 +72,63 @@ export const dataBaseSidebar = [
       "baseContent.md",
       {
         text: "基础知识",
-        prefix: "/dataBase/mysql/jichuzhishi/",
+        prefix: "/dataBase/mysql/basics/",
         collapsible: true,
         children: [
-          "utf8heutf8mb4deoubie.md",
-          "shujubiao.md",
-          "fenoubiao.md",
-          "mysqlshujuleixing.md",
-          "liecaozuo.md",
-          "chaxunshuju.md",
-          "zhihangyugou.md",
-          "hanshu.md",
-          "suoyin.md",
-          "yaoshutiaojian.md",
-          "cunchuguocheng.md",
-          "zhihangshunxu.md",
-          "suo.md",
-          "shiwu.md"]
+          "utf8VsUtf8mb4.md",
+          "dataTable.md",
+          "partitionTable.md",
+          "mysqlDataTypes.md",
+          "columnOperations.md",
+          "queryData.md",
+          "preparedStatements.md",
+          "functions.md",
+          "index.md",
+          "aggregateConditions.md",
+          "storedProcedure.md",
+          "executionOrder.md",
+          "lock.md",
+          "transaction.md"]
       },
       {
         text: "MySQL函数",
-        prefix: "/dataBase/mysql/mysqlhanshu/",
+        prefix: "/dataBase/mysql/mysqlFunctions/",
         collapsible: true,
-        children: ["mysqlhanshu.md",
-          "shujuleixing.md",
-          "duibi.md"]
+        children: ["mysqlFunctions.md",
+          "dataTypes.md",
+          "comparison.md"]
       },
       {
         text: "数据库优化记录",
-        prefix: "/dataBase/mysql/shujukuyouhuajilu/",
+        prefix: "/dataBase/mysql/optimizationLogs/",
         collapsible: true,
-        children: ["shujukuyouhuajilu.md",
-          "jianbiaoyugouyouhua.md",
-          "chaxunsql.md",
-          "douxiefenli.md",
-          "jinshencaozuo.md"]
+        children: ["optimizationLogs.md",
+          "tableStructureOptimization.md",
+          "querySql.md",
+          "readWriteSeparation.md",
+          "cautiousOperations.md"]
       },
       "codeOperator.md",
       {
         text: "进阶",
-        prefix: "/dataBase/mysql/jinjie/",
+        prefix: "/dataBase/mysql/advanced/",
         collapsible: true,
         children: [
-          "zhucongfuzhi.md",
+          "masterSlaveReplication.md",
           "federated.md"
         ]
       },
       {
         text: "执行计划",
-        prefix: "/dataBase/mysql/zhihangjihua/",
+        prefix: "/dataBase/mysql/executionPlan/",
         collapsible: true,
-        children: ["jiancesuoyinshifoushengxiao.md"]
+        children: ["checkIndexEffectiveness.md"]
       },
       {
         text: "脚本",
-        prefix: "/dataBase/mysql/jiaoben/",
+        prefix: "/dataBase/mysql/scripts/",
         collapsible: true,
-        children: ["mysqlbeifenjiaoben.md",
+        children: ["mysqlBackupScript.md",
           "mysqldumpOperator.md",]
       },
       {
@@ -144,11 +144,11 @@ export const dataBaseSidebar = [
       },
       {
         text: "遇到的问题",
-        prefix: "/dataBase/mysql/yudaodewenti/",
+        prefix: "/dataBase/mysql/issues/",
         collapsible: true,
         children: ["issue.md",
           "netFrameworkUse.md",
-          "diguichubulaishangji.md"]
+          "recursiveQueryDepthLimit.md"]
       }]
   },
   {
