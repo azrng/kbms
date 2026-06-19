@@ -6,3 +6,6 @@ src/.vuepress/.temp/
 src/.vuepress/dist/
 .claude
 .mimocode
+.codegraph
+.cursor
+.codex
