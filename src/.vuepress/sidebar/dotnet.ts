@@ -1,9 +1,10 @@
 // dotNet代码
 
 export const dotnetSidebar = [
-  "readme.md",
-  "cli.md",
-  {
+      "readme.md",
+      "ipchuli.md",
+      "encodingDetect.md",
+      {
     text: "教程",
     prefix: "/dotnet/jiaocheng/",
     collapsible: true,
@@ -470,7 +471,8 @@ export const dotnetSidebar = [
     },
       "muiltLanguage.md",
       "diaoyongzhexinxi.md",
-      "ihostedservicerenwu.md"]
+      "ihostedservicerenwu.md",
+      "blazorDbContextLife.md"]
   },
   {
     text: "框架解析",
