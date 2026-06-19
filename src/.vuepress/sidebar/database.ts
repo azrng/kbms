@@ -354,7 +354,12 @@ export const dataBaseSidebar = [
     prefix: "/dataBase/dockdb/",
     collapsible: true,
     children: [
-      "readme.md"
+      "readme.md",
+      "conceptAndCompare.md",
+      "connectionSetup.md",
+      "queryAndParameter.md",
+      "typeMappingAndTraps.md",
+      "bestPracticesAndTroubleshoot.md"
     ]
   },
   {
