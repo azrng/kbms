@@ -158,7 +158,7 @@ export const dataBaseSidebar = [
     children: [
       "readme.md",
       "baseContent.md",
-      "columnType",
+      "columnType.md",
       "timestamp.md",
       "transaction.md",
       "method.md",
@@ -349,7 +349,7 @@ export const dataBaseSidebar = [
       "readme.md"
     ]
   },
-    {
+  {
     text: "DockDb",
     prefix: "/dataBase/dockdb/",
     collapsible: true,
