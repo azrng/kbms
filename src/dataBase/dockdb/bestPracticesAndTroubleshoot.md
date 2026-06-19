@@ -15,7 +15,7 @@ tag:
   - 最佳实践
 ---
 
-## 九、常见错误排查 🩺
+## 一、常见错误排查 🩺
 
 遇到报错不要慌，先对照下面的清单排查。
 
@@ -66,9 +66,49 @@ tag:
 5. 是否已 `USE <alias>`？
 6. 直接 attached table 是否触发了 schema 丢失？可用 `quack_query_by_name` 验证同一 SQL 是否能跑通。
 
+### 7. `Binder Error: Catalog "xxx" does not exist!`
+
+**原因**：ATTACH 模式失败，可能是扩展版本问题。
+
+**排查**：
+
+1. 检查扩展文件大小：
+   - 服务器官方版本：约 33MB
+   - 客户端精简版本：约 22MB
+   - 差异达 11MB 说明使用了精简编译版本，缺少 ATTACH 功能完整实现
+
+2. 验证方法：
+   ```sql
+   -- 服务器本地测试
+   LOAD quack;
+   ATTACH 'quack://localhost:9494' AS remote (TYPE quack, TOKEN '...');
+   -- 如果同样失败，说明是扩展版本问题
+   ```
+
+**解决**：
+
+- **方案一**：使用官方完整版本扩展
+  ```bash
+  # Linux 部署
+  cp /root/.duckdb/extensions/v1.5.3/linux_amd64/quack.duckdb_extension \
+     /your-app/Extensions/v1.5.3/linux_amd64/
+  ```
+- **方案二**：切换到 quack_query 模式（见连接配置章节）
+
+### 8. 如何查看服务器上的数据库名？
+
+```sql
+SELECT * FROM quack_query(
+    'quack://172.16.68.108:9494',
+    'SHOW DATABASES',
+    token := '...',
+    disable_ssl := true
+);
+```
+
 ---
 
-## 十、生产级最佳实践
+## 二、生产级最佳实践
 
 ### 1. 复用连接，不要每次查询都新建
 
@@ -150,7 +190,7 @@ cmd.CommandText = $"WHERE name = '{userInput}'";
 
 ---
 
-## 十一、完整示例：可运行的 Console 项目
+## 三、完整示例：可运行的 Console 项目
 
 把下面两个文件放在一起，配上扩展文件，就能直接跑起来 👇
 
@@ -289,7 +329,7 @@ static string SqlLimitLiteral(int value)
 
 ---
 
-## 十二、封装建议：生产项目应该怎么拆
+## 四、封装建议：生产项目应该怎么拆
 
 如果要把上面的示例代码整理成生产可复用的组件，建议至少拆成以下几个职责模块：
 
@@ -301,7 +341,7 @@ static string SqlLimitLiteral(int value)
 
 ---
 
-## 十三、速查表 📋
+## 五、速查表 📋
 
 收藏这一段，随时查阅：
 

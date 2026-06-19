@@ -14,7 +14,7 @@ tag:
   - Dapper
 ---
 
-## 七、类型映射与 NULL 处理
+## 一、类型映射与 NULL 处理
 
 ### 1. .NET 类型 → DuckDB 类型映射
 
@@ -70,7 +70,7 @@ private sealed class OrderDto
 
 ---
 
-## 八、SQL 方言陷阱：三段式列引用
+## 二、SQL 方言陷阱：三段式列引用
 
 有些上游 SQL 生成器会输出 `schema.table.column` 形式的三段式列引用。DuckDB 在部分查询场景下会把 `source.orders` 作为 schema + table 解析，但在列限定符里继续写 `source.orders.created_at` 可能触发绑定错误。这个问题与具体 DuckDB 版本、SQL 形态和是否经过 Quack 远端解析有关，**建议在目标版本上实际验证**。
 

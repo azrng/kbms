@@ -14,7 +14,7 @@ tag:
   - Quack
 ---
 
-## 三、准备工作：客户端侧配置
+## 一、准备工作：客户端侧配置
 
 工欲善其事，必先配好依赖。这一步做好了，后面就顺畅了。
 
@@ -128,7 +128,7 @@ static string GetDuckDbExtensionPath(string extensionName)
 
 ---
 
-## 四、连接 Quack 服务端：四步走 🚀
+## 二、连接 Quack 服务端：四步走 🚀
 
 终于到了核心部分。下面是一个**完整、可直接运行**的最小示例。**读懂这段代码，你就掌握了 90% 的内容。**
 
@@ -185,3 +185,96 @@ void ExecuteScalar(string sql)
 ### 关于 SSL 选项 ⚠️
 
 示例中的 `DISABLE_SSL true` 只适合**内网、测试环境或服务端明确未启用 TLS** 的场景。**生产环境应优先启用 TLS**，并按 Quack 服务端实际配置移除 `DISABLE_SSL true` 或改用服务端要求的安全连接参数。不要为了绕过证书问题在生产环境长期关闭 SSL。
+
+---
+
+## 三、连接字符串格式
+
+### 格式一：Host/Port（推荐）
+
+```
+Host=172.16.68.108;Port=9494;Token=<your-token>;Catalog=duckflight
+```
+
+### 格式二：URI
+
+```
+quack://172.16.68.108:9494?token=<your-token>&tls=false AS duckflight
+```
+
+### 连接字符串参数说明
+
+| 参数 | 说明 | 必填 | 示例 |
+|------|------|------|------|
+| `Host` | 服务器地址 | 是 | `172.16.68.108` |
+| `Port` | 服务器端口 | 是 | `9494` |
+| `Token` | 认证令牌 | 是 | `00c251a292ef...` |
+| `Catalog` | 数据库名称 | 是 | `duckflight` |
+| `DisableSsl` | 禁用 SSL | 否 | `true`（默认） |
+| `ExtensionPath` | 扩展文件路径 | 否 | `/opt/duckdb/extensions/` |
+
+---
+
+## 四、quack_query 模式：ATTACH 的替代方案
+
+### 问题背景
+
+在某些情况下，ATTACH 模式可能失败：
+
+```
+Binder Error: Catalog "duckflight" does not exist!
+```
+
+**根本原因**：客户端使用的 `quack.duckdb_extension` 是精简编译版本（约 22MB），缺少 ATTACH storage layer 的完整实现。服务器上通过 `INSTALL quack` 安装的是官方完整版本（约 33MB）。
+
+### 解决方案：quack_query 表函数
+
+使用 `quack_query` 表函数直接在远程服务器执行 SQL，无需本地 ATTACH：
+
+```sql
+-- quack_query 模式：直接远程执行
+SELECT * FROM quack_query(
+    'quack://172.16.68.108:9494',
+    'SELECT count(*) FROM source.fee_detail',
+    token := '...',
+    disable_ssl := true
+);
+```
+
+### 两种模式对比
+
+| 特性 | ATTACH 模式 | quack_query 模式 |
+|------|-------------|------------------|
+| 本地 Catalog 映射 | ✅ 支持 | ❌ 不支持 |
+| 跨库查询 | ✅ 支持 | ❌ 不支持 |
+| 精简版扩展兼容 | ❌ 不支持 | ✅ 支持 |
+| 实现复杂度 | 高 | 低 |
+
+### 实现改动
+
+1. **`Open()` 方法**：移除 `AttachRemote()` 调用，只加载扩展
+2. **`CreateDbCommand()`**：返回自定义 `QuackDbCommand`
+3. **`QuackDbCommand`**：拦截 SQL 执行，包装成 `quack_query()` 调用
+4. **参数支持**：在包装前替换参数值
+
+### 如何使用 ATTACH 模式？
+
+两种方案：
+
+1. **部署到 Linux**：直接使用服务器上的官方扩展
+   ```bash
+   cp /root/.duckdb/extensions/v1.5.3/linux_amd64/quack.duckdb_extension \
+      /your-app/Extensions/v1.5.3/linux_amd64/
+   ```
+
+2. **在 Windows 安装官方扩展**：
+   ```sql
+   -- 使用 DuckDB CLI
+   INSTALL quack;
+   ```
+
+### quack_query 模式的限制
+
+- 不支持跨库查询（每个查询只能访问一个远程数据库）
+- 不支持本地与远程表的 JOIN
+- 每次查询都需要建立新的 RPC 连接
