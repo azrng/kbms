@@ -44,6 +44,7 @@ export const aiSidebar = [
     "aiProject.md",
     "sse-streaming-spec.md",
     "harness-engineering.md",
+    "sddSpecDrivenDevelopment.md",
     {
         text: "Microsoft Agent Framework",
         prefix: "/ai/microsoftAgentFramework/",

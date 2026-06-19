@@ -1214,6 +1214,7 @@ export const dotnetSidebar = [
     children: [
       "readme.md",
       "aot.md",
+      "githubActions.md",
       {
         text: "部署",
         prefix: "/dotnet/buildAndRelease/release/",
