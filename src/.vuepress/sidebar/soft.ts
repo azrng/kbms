@@ -23,6 +23,7 @@ export const softSidebar = [
             "backup.md",
             "entertainment.md",
             "devTools.md",
+            "skillHub.md",
             "proxy.md",
             "daily.md",
             "system.md",
