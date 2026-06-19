@@ -158,6 +158,112 @@ nuget地址：https://www.nuget.org/packages/Zack.EFCore.Batch
 
 资料：https://servicestack.net/posts/bulk-insert-performance
 
-##  资料
+## EF Core 7+ 官方批量操作
 
-https://mp.weixin.qq.com/s/a6ro5J4gQOK5Sac9MycfVg | .NET 数据库大数据方案（插入、更新、删除、查询 、插入或更新）
+从 EF Core 7 开始，官方提供了 `ExecuteUpdateAsync` 和 `ExecuteDeleteAsync`，直接在数据库执行批量操作，无需加载实体。
+
+### 核心优势
+
+| 特性 | 传统 SaveChanges | ExecuteUpdate/Delete |
+|------|------------------|---------------------|
+| SQL 数量 | N+1 条 | 1 条 |
+| 内存占用 | 高（加载全部实体） | 低（不加载） |
+| 实体跟踪 | 需要 | 不需要 |
+| 类型安全 | 是 | 是 |
+
+### 批量更新
+
+```csharp
+// 一条 SQL 直接执行
+await _context.Users
+    .Where(x => x.Status == UserStatus.Inactive)
+    .ExecuteUpdateAsync(x => x
+        .SetProperty(u => u.Status, UserStatus.Deleted)
+        .SetProperty(u => u.DeletedAt, DateTime.Now)
+    );
+```
+
+生成 SQL：
+
+```sql
+UPDATE [Users] SET [Status] = @p0, [DeletedAt] = @p1 WHERE [Status] = @p2
+```
+
+### 批量删除
+
+```csharp
+await _context.Users
+    .Where(x => x.Status == UserStatus.Deleted && x.DeletedAt < DateTime.Now.AddDays(-30))
+    .ExecuteDeleteAsync();
+```
+
+### 条件更新扩展方法（PATCH 场景）
+
+解决"字段值为 null 时不更新"的问题：
+
+```csharp
+public static class ConditionalUpdateExtensions
+{
+    // 值不为 null 时才更新
+    public static UpdateSettersBuilder<TSource> SetPropertyIfNotNull<TSource, TProperty>(
+        this UpdateSettersBuilder<TSource> builder,
+        Expression<Func<TSource, TProperty>> propertyExpression,
+        TProperty value) where TProperty : class
+    {
+        if (value is null) return builder;
+        builder.SetProperty(propertyExpression, Expression.Constant(value, typeof(TProperty)));
+        return builder;
+    }
+
+    // 字符串不为空白时才更新
+    public static UpdateSettersBuilder<TSource> SetPropertyIfNotNullOrWhiteSpace<TSource>(
+        this UpdateSettersBuilder<TSource> builder,
+        Expression<Func<TSource, string>> propertyExpression,
+        string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return builder;
+        builder.SetProperty(propertyExpression, Expression.Constant(value, typeof(string)));
+        return builder;
+    }
+
+    // 布尔条件为 true 时才更新
+    public static UpdateSettersBuilder<TSource> SetPropertyIfTrue<TSource, TProperty>(
+        this UpdateSettersBuilder<TSource> builder,
+        bool condition,
+        Expression<Func<TSource, TProperty>> propertyExpression,
+        TProperty value)
+    {
+        if (!condition) return builder;
+        builder.SetProperty(propertyExpression, Expression.Constant(value, typeof(TProperty)));
+        return builder;
+    }
+}
+```
+
+使用示例：
+
+```csharp
+await _context.Users
+    .Where(x => x.Id == userId)
+    .ExecuteUpdateAsync(x => x
+        .SetProperty(u => u.UpdateTime, DateTime.Now)                    // 无条件更新
+        .SetPropertyIfNotNull(u => u.Email, email)                       // null 不更新
+        .SetPropertyIfNotNullOrWhiteSpace(u => u.UserName, userName)     // 空白不更新
+    );
+```
+
+### 适用场景
+
+| ✅ 推荐使用 | ⚠️ 谨慎使用 |
+|------------|------------|
+| 批量状态更新 | 需要触发域事件 |
+| 条件批量修改 | 需要验证业务规则 |
+| 软删除标记 | 需要级联更新 |
+| 统计字段更新 | 需要乐观并发检查 |
+
+> **核心判断**：处理"实体业务逻辑"用 SaveChanges，执行"数据库批量动作"用 ExecuteUpdate。
+
+## 资料
+
+- https://mp.weixin.qq.com/s/a6ro5J4gQOK5Sac9MycfVg | .NET 数据库大数据方案
+- https://learn.microsoft.com/en-us/ef/core/what-is-new/ef-core-7.0/whatsnew#executeupdate-and-executedelete
