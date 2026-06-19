@@ -4,21 +4,21 @@
 export const classicArticleSidebar = [
     "collect.md",
     "saying.md",
-    "nenglishuipinghegongzuolouxi.md",
+    "abilityAndBadHabits.md",
     "workStepByStep.md",
     "goodHabit.md",
     "developmentProductManager.md",
     "resourceManage.md",
-    "workplaceRelaxation",
+    "workplaceRelaxation.md",
     "workplaceAcceleration.md",
     {
         text: "学习资源",
-        prefix: "/classicArticle/xuexiResource/",
+        prefix: "/classicArticle/learningResource/",
         collapsible: true,
         children: [
-            "jiaoYuPlatform.md",
+            "educationPlatform.md",
             "studyMethod.md",
-            "zhishixuexifangfalun.md",
+            "learningMethodology.md",
             "notSuchABadProgrammer.md",
         ]
     }
