@@ -172,38 +172,38 @@ export const dataBaseSidebar = [
     text: "Oracle",
     prefix: "/dataBase/oracle/",
     collapsible: true,
-    children: ["shuiming.md",
-      "jichucaozuo.md",
-      "changyongshujuleixing.md",
-      "hanshu.md",
+    children: ["description.md",
+      "basicOperations.md",
+      "commonDataTypes.md",
+      "functions.md",
       "dblink.md",
       {
         text: "dotNet操作",
-        prefix: "/dataBase/oracle/dotnetcaozuo/",
+        prefix: "/dataBase/oracle/dotnetOperations/",
         collapsible: true,
         children: ["dotnetcaozuo.md",
           "oraclehelper.md"]
       },
       {
         text: "数据库备份和还原",
-        prefix: "/dataBase/oracle/shujukubeifenhehaiyuan/",
+        prefix: "/dataBase/oracle/backupAndRestore/",
         collapsible: true,
-        children: ["shujukubeifenhehaiyuan.md",
-          "fuwuqidingshijihua.md"]
+        children: ["backupAndRestore.md",
+          "serverScheduledTasks.md"]
       },
       {
         text: "安装",
-        prefix: "/dataBase/oracle/anzhuang/",
+        prefix: "/dataBase/oracle/installation/",
         collapsible: true,
-        children: ["winx64_12201_clientanzhuang.md",
-          "oracleinstallclient12_2anzhuangjiaocheng.md"]
+        children: ["winx64_12201ClientInstall.md",
+          "oracleInstallClient12_2Guide.md"]
       },
       {
         text: "Oracle使用问题",
-        prefix: "/dataBase/oracle/oracleshiyongwenti/",
+        prefix: "/dataBase/oracle/oracleIssues/",
         collapsible: true,
-        children: ["oracleshiyongwenti.md",
-          "11gchuangjianshujuku.md"]
+        children: ["oracleIssues.md",
+          "11gCreateDatabase.md"]
       }]
   },
   {
