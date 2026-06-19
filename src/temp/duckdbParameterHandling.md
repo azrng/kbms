@@ -15,30 +15,40 @@ tag:
   - 参数化查询
 ---
 
-> 面向首次接触 DuckDB / Quack 的 .NET 开发者。读完本文你能：在 .NET 项目里装好客户端依赖、连上一台远程 Quack DuckDB 服务、跑通基础查询，并理解为什么生产代码通常需要封装层处理 SQL 规范化和参数转换。
+> 📖 **导读**
+>
+> 如果你是一名 .NET 开发者，第一次接触 DuckDB 和 Quack，大概率会遇到一连串"为什么跑不通"的问题：连接串怎么写？参数为什么不能用 `@`？为什么 `ATTACH` 了远程表还是查不到数据？
+>
+> 这篇文章就是为你写的。我们会从概念讲起，一步步带你完成：**安装依赖 → 连接远程 Quack 服务 → 跑通基础查询 → 理解参数化查询的坑与解法**。读完之后，你不仅能把代码跑起来，更能理解为什么生产项目里通常需要一个封装层来处理 SQL 规范化和参数转换。
+>
+> 全文基于 Quack v1.5.3 实测环境，所有结论均经过验证。
 
 ---
 
 ## 一、概念入门：先弄清楚三个东西
 
-### 1. DuckDB 是什么
+在写代码之前，我们先花几分钟把三个核心概念捋清楚。磨刀不误砍柴工。
 
-DuckDB 是一个**嵌入式 OLAP 数据库**，可以理解为"分析场景的 SQLite"：
+### 1. DuckDB 是什么 🦆
 
-- **嵌入式**：以 `.dll/.so/.dylib` 形式被你的 .NET 进程加载，不需要单独跑一个数据库服务。
+DuckDB 是一个**嵌入式 OLAP 数据库**，你可以把它理解为"**分析场景的 SQLite**"：
+
+- **嵌入式**：以 `.dll/.so/.dylib` 形式被你的 .NET 进程直接加载，**不需要单独跑一个数据库服务**。
 - **OLAP**：面向分析型负载（聚合、扫表、大结果集），不是 OLTP（高并发小事务）。
-- **SQL 兼容**：用 PostgreSQL 风格的 SQL 语法。
+- **SQL 兼容**：使用 PostgreSQL 风格的 SQL 语法。
 
-在 .NET 里通过 `DuckDB.NET.Data.Full` NuGet 包调用它。
+在 .NET 里，我们通过 `DuckDB.NET.Data.Full` 这个 NuGet 包来调用它。
 
 ### 2. Quack 是什么
 
-Quack 是 DuckDB 的**远程协议扩展**（loadable extension）。DuckDB 本身是嵌入式的，但有时你想让多个客户端共享同一份远程数据，于是有了 Quack：
+Quack 是 DuckDB 的**远程协议扩展**（loadable extension）。DuckDB 本身是嵌入式的，但实际项目中你可能需要**让多个客户端共享同一份远程数据**，于是就有了 Quack：
 
-- Quack 服务端：一个独立进程（或容器），背后挂一份 DuckDB 文件或 catalog，对外暴露 Quack 协议。
-- Quack 客户端：在本地 DuckDB 里加载 `quack` 扩展后，可以通过 `ATTACH ... (TYPE quack, ...)` 像访问本地表一样查询远程数据。
+- **Quack 服务端**：一个独立进程（或容器），背后挂一份 DuckDB 文件或 catalog，对外暴露 Quack 协议。
+- **Quack 客户端**：在本地 DuckDB 里加载 `quack` 扩展后，通过 `ATTACH ... (TYPE quack, ...)` 就能**像访问本地表一样查询远程数据**。
 
-### 3. 调用链路：四层
+### 3. 调用链路：四层结构
+
+理解整个调用链路至关重要。从你的代码到远端数据，中间一共经过四层：
 
 ```text
 你的 .NET 应用
@@ -48,11 +58,15 @@ Quack 是 DuckDB 的**远程协议扩展**（loadable extension）。DuckDB 本�
                     └── 远程 Quack DuckDB 服务端
 ```
 
-**关键认知**：你不是"直接连"远程 Quack 服务端。你是先在进程内起一个本地 DuckDB，再让它通过 quack 扩展去和远程服务端通信。本地这层 DuckDB 既是 SQL 解析器、又是协议客户端。
+💡 **关键认知**：你**不是"直接连"远程 Quack 服务端**。实际过程是——先在你的进程内启动一个本地 DuckDB 实例，再让它通过 quack 扩展去和远端通信。**本地这层 DuckDB 既是 SQL 解析器、又是协议客户端。**
+
+理解了这一点，后面很多"为什么"就迎刃而解了。
 
 ---
 
-## 二、概念对比：和 SQL Server / PostgreSQL 的差异
+## 二、概念对比：和 SQL Server / PostgreSQL 有什么不同
+
+如果你之前一直用 SQL Server 或 PostgreSQL，迁移到 DuckDB + Quack 时，有几个关键差异必须心里有数：
 
 | 维度 | SQL Server / PostgreSQL | DuckDB + Quack |
 |---|---|---|
@@ -65,17 +79,21 @@ Quack 是 DuckDB 的**远程协议扩展**（loadable extension）。DuckDB 本�
 | 默认 database | 连接串指定 | 本地默认 `:memory:`，需要 `USE <alias>` 切到远程 |
 | 远端查询 | 直接访问服务端表 | 当前 Quack v1.5.3 下，直接 `FROM source.orders` 可能下推失败，推荐通过封装层或 `quack_query_by_name` |
 
-最容易踩坑的两条：
+⚠️ **最容易踩坑的三条**（每条都是血的教训）：
 
-1. **DuckDB 不支持 `@paramName`**。直接写会语法错，应改用 `?`、`$1` 或 `$paramName`。
+1. **DuckDB 不支持 `@paramName`**。直接写会报语法错误，应改用 `?`、`$1` 或 `$paramName`。
 2. **`ATTACH` 之后默认库还是本地 `:memory:`**。不 `USE remote`，就查不到远程表。
 3. **直接查询 attached table 不一定等价于远端执行原 SQL**。当前实测环境中，`SELECT ... FROM source.orders` 会在下推时丢失 schema，报 `Table with name orders does not exist`；可用 `quack_query_by_name(alias, sql)` 让远端解析 SQL。
 
 ---
 
-## 三、准备工作（客户端侧）
+## 三、准备工作：客户端侧配置
+
+工欲善其事，必先配好依赖。这一步做好了，后面就顺畅了。
 
 ### 1. NuGet 包
+
+首先安装两个 NuGet 包——一个必需，一个可选：
 
 ```xml
 <ItemGroup>
@@ -90,19 +108,23 @@ Quack 是 DuckDB 的**远程协议扩展**（loadable extension）。DuckDB 本�
 
 ### 2. 目标框架
 
+`DuckDB.NET.Data.Full` 需要 **.NET 8 及以上**，在项目文件中声明：
+
 ```xml
 <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
 </PropertyGroup>
 ```
 
-### 3. quack / httpfs 扩展文件
+### 3. quark / httpfs 扩展文件
 
-DuckDB 的 native 引擎只是"裸的"数据库，`quack.duckdb_extension` 是独立的可加载扩展。你需要把它放到运行时能找到的位置。
+⚠️ 这是准备工作中最容易被忽略的一步。
 
-如果应用运行在不能访问外网的内网环境，还需要提前下载并随包分发 `httpfs.duckdb_extension`。原因是 Quack / DuckDB 在访问远端资源或扩展依赖时可能需要 `httpfs`，而内网环境无法在运行时通过 DuckDB extension repository 自动拉取扩展文件。不要依赖 `INSTALL httpfs;` 在生产内网环境临时下载。
+DuckDB 的 native 引擎只是一个"裸的"数据库，`quack.duckdb_extension` 是**独立的可加载扩展**，你需要把它放到运行时能找到的位置。
 
-**目录结构**（推荐）：
+**如果你的应用运行在不能访问外网的内网环境**，还需要提前下载并随包分发 `httpfs.duckdb_extension`。原因是 Quack / DuckDB 在访问远端资源或扩展依赖时可能需要 `httpfs`，而内网环境无法在运行时通过 DuckDB extension repository 自动拉取扩展文件。**不要依赖 `INSTALL httpfs;` 在生产内网环境临时下载。**
+
+**推荐的目录结构**如下：
 
 ```text
 YourApp/
@@ -129,7 +151,7 @@ YourApp/
 
 > 这不是 DuckDB 强制规定的目录结构，只是应用内分发扩展文件的一种约定。关键是运行时能根据 DuckDB / Quack 扩展版本、操作系统和 CPU 架构定位到正确的 `.duckdb_extension` 文件。若 Quack 当前未提供某个平台的扩展文件，就不要在目录示例中放该平台，代码也应抛出清晰错误。
 
-**csproj 里声明为 Content，构建时复制到输出目录**：
+接下来，在 **csproj 里声明为 Content，构建时自动复制到输出目录**：
 
 ```xml
 <ItemGroup>
@@ -137,15 +159,15 @@ YourApp/
 </ItemGroup>
 ```
 
-**扩展文件从哪里来**：
+**扩展文件从哪里来？** 有三种途径：
 
 - 如果你的项目已经随包或内部组件提供对应版本的 `quack.duckdb_extension`，可直接复制到上面的 `extensions/` 目录。
-- `httpfs.duckdb_extension` 要和当前 DuckDB native engine 的版本、平台、CPU 架构匹配。内网部署前应在可联网环境下载好，再复制到制品或内部制品库。
+- `httpfs.duckdb_extension` 要和当前 DuckDB native engine 的版本、平台、CPU 架构匹配。**内网部署前应在可联网环境下载好**，再复制到制品或内部制品库。
 - 也可以从 DuckDB extension repository 获取，或自行编译。
 
 ### 4. 运行时探测扩展路径
 
-如果扩展文件已经随应用分发到本地，DuckDB 可以通过 `LOAD '<path>'` 从显式路径加载。你需要根据当前平台拼出对应路径：
+如果扩展文件已经随应用分发到本地，DuckDB 可以通过 `LOAD '<path>'` 从显式路径加载。你需要**根据当前平台动态拼出对应路径**：
 
 ```csharp
 using System.Runtime.InteropServices;
@@ -175,11 +197,13 @@ static string GetDuckDbExtensionPath(string extensionName)
 }
 ```
 
+这段代码的核心逻辑是：先通过 `RuntimeInformation` 探测当前 OS 和 CPU 架构，再拼接出扩展文件的完整路径。注意 `AppContext.BaseDirectory` 比 `Directory.GetCurrentDirectory()` 更可靠，不受工作目录影响。
+
 ---
 
-## 四、连接 Quack 服务端：四步走
+## 四、连接 Quack 服务端：四步走 🚀
 
-下面是一个**完整、可直接运行**的最小示例。读完这段你就掌握了 90% 的内容。
+终于到了核心部分。下面是一个**完整、可直接运行**的最小示例。**读懂这段代码，你就掌握了 90% 的内容。**
 
 ```csharp
 using DuckDB.NET.Data;
@@ -218,7 +242,7 @@ void ExecuteScalar(string sql)
 }
 ```
 
-### 关键点解释
+### 每一步在做什么？漏掉会怎样？
 
 | 步骤 | 作用 | 漏掉会怎样 |
 |---|---|---|
@@ -227,19 +251,23 @@ void ExecuteScalar(string sql)
 | Step 3 `ATTACH ... AS remote` | 建立到远程的连接，别名 `remote` | 查询时报"database remote does not exist" |
 | Step 3 `USE remote` | 把当前会话默认 database 切到 `remote` | `select * from main.orders` 实际查的是本地 `:memory:` 的 `main.orders`，报 `Table with name orders does not exist` |
 
-> 如果扩展不在本地，而是来自 DuckDB extension repository，才考虑 `INSTALL quack; LOAD quack;` 这类安装后加载流程。本文采用“应用随包分发本地扩展文件”的场景，所以只使用 `LOAD '<path>'`。
+> 如果扩展不在本地，而是来自 DuckDB extension repository，才考虑 `INSTALL quack; LOAD quack;` 这类安装后加载流程。本文采用"应用随包分发本地扩展文件"的场景，所以只使用 `LOAD '<path>'`。
 
 > 内网环境同理，不建议在运行时执行 `INSTALL httpfs;`。应提前把匹配版本和平台的 `httpfs.duckdb_extension` 放到本地扩展目录，然后通过 `LOAD '<path>'` 加载。
 
-### SSL 选项
+### 关于 SSL 选项 ⚠️
 
-示例中的 `DISABLE_SSL true` 只适合内网、测试环境或服务端明确未启用 TLS 的场景。生产环境应优先启用 TLS，并按 Quack 服务端实际配置移除 `DISABLE_SSL true` 或改用服务端要求的安全连接参数。不要为了绕过证书问题在生产环境长期关闭 SSL。
+示例中的 `DISABLE_SSL true` 只适合**内网、测试环境或服务端明确未启用 TLS** 的场景。**生产环境应优先启用 TLS**，并按 Quack 服务端实际配置移除 `DISABLE_SSL true` 或改用服务端要求的安全连接参数。不要为了绕过证书问题在生产环境长期关闭 SSL。
 
 ---
 
-## 五、基础查询（无参数）
+## 五、基础查询：先把数据读出来
 
-当前 Quack v1.5.3 实测中，直接执行下面这种 attached table 查询可能失败：
+连接建立好了，我们来做第一次查询。
+
+### ⚠️ 直接查 attached table 可能失败
+
+在当前 Quack v1.5.3 实测中，直接执行下面这种 attached table 查询**可能失败**：
 
 ```sql
 SELECT order_id, user_id, order_status, order_amount
@@ -247,14 +275,16 @@ FROM source.orders
 LIMIT 10;
 ```
 
-典型错误是远端实际收到的查询丢失了 schema，变成 `FROM orders`：
+典型错误是远端实际收到的查询**丢失了 schema**，变成 `FROM orders`：
 
 ```text
 Invalid Input Error: Table with name orders does not exist!
 Did you mean "source.orders"?
 ```
 
-更稳妥的方式是使用 Quack 扩展提供的 `quack_query_by_name(alias, sql)`，把完整 SQL 字符串交给远端解析：
+### ✅ 更稳妥的方式：`quack_query_by_name`
+
+使用 Quack 扩展提供的 `quack_query_by_name(alias, sql)`，**把完整 SQL 字符串交给远端解析**，就能避免下推过程中 schema 丢失的问题：
 
 ```csharp
 using var cmd = connection.CreateCommand();
@@ -277,30 +307,32 @@ while (reader.Read())
 }
 ```
 
-要点：
+**几个要点**：
 
 - `CreateCommand()` 自带 `DuckDBCommand`，绑定到当前 `connection`。
 - `ExecuteReader()` 返回 `DbDataReader`，可以用 `Read()` 逐行推进。
 - 用 `IsDBNull(i)` 检查 NULL，否则 `GetInt64` 等强类型方法会抛异常。
 - `using` 释放命令和 reader，避免资源泄漏。
-- `quack_query_by_name` 只接受 `(alias, sql)` 两个字符串参数；它不能接收外层 `DuckDBParameter` 并转发给内层 SQL。
+- ⚠️ **`quack_query_by_name` 只接受 `(alias, sql)` 两个字符串参数**；它不能接收外层 `DuckDBParameter` 并转发给内层 SQL。这一点在后面的参数化查询章节尤为关键。
 
 ---
 
-## 六、参数化查询（核心章节）
+## 六、参数化查询：本文最核心的章节
+
+如果你从 SQL Server / PostgreSQL 迁移过来，这一章能帮你避开最大的几个坑。
 
 ### 1. 为什么不能用 `@paramName`
 
-如果你从 SQL Server / PostgreSQL 迁移过来，会习惯这样写：
+你可能习惯这样写：
 
 ```sql
 -- ❌ 在 DuckDB 里行不通
 SELECT * FROM source.orders WHERE order_status = @status AND amount >= @minAmount;
 ```
 
-DuckDB **不认识 `@` 前缀的命名参数**。直接传过去会报语法错误。
+但 DuckDB **不认识 `@` 前缀的命名参数**。直接传过去会报语法错误。
 
-DuckDB 支持以下参数占位符：
+DuckDB 实际支持以下参数占位符：
 
 | 写法 | 含义 | 示例 |
 |---|---|---|
@@ -308,11 +340,11 @@ DuckDB 支持以下参数占位符：
 | `$1, $2, ...` | 显式位置编号 | `WHERE status = $1 AND amount >= $2` |
 | `$name` | 命名参数 | `WHERE status = $status` |
 
-下面三种是 DuckDB.NET / Dapper 的参数绑定语法，但在当前 Quack v1.5.3 的远端查询场景里有一个重要限制：如果查询必须通过 `quack_query_by_name(alias, sql)` 才能正确执行，外层 `DuckDBParameter` 不会传入内层 SQL。也就是说，下面示例适用于本地 DuckDB 查询；不要直接把它们套到 `quack_query_by_name` 内层 SQL 里。
+💡 下面将介绍三种 DuckDB.NET / Dapper 的参数绑定语法。但在当前 Quack v1.5.3 的远端查询场景里有一个**重要限制**：如果查询必须通过 `quack_query_by_name(alias, sql)` 才能正确执行，**外层 `DuckDBParameter` 不会传入内层 SQL**。也就是说，下面示例适用于本地 DuckDB 查询；**不要直接把它们套到 `quack_query_by_name` 内层 SQL 里**。
 
 ### 2. 方式 A：DuckDB 原生 `?` 位置参数（推荐学习）
 
-最直接、最贴近 native 引擎行为的写法。注意：当前实测中，这种写法直接查询 `source.orders` 会因为 Quack 下推丢失 schema 而失败，需要封装层处理。
+这是最直接、最贴近 native 引擎行为的写法。⚠️ 注意：当前实测中，这种写法直接查询 `source.orders` 会因为 Quack 下推丢失 schema 而失败，需要封装层处理。
 
 ```csharp
 using var cmd = connection.CreateCommand();
@@ -335,16 +367,16 @@ while (reader.Read())
 }
 ```
 
-**特点**：
+**方式 A 的特点**：
 
 - ✅ 与 DuckDB C++ 引擎原生兼容，无任何中间转换
 - ✅ 性能最好
 - ⚠️ 没有"参数名"，只能靠顺序，参数多了容易对错位置
 - ⚠️ 同一个值用两次需要 `Add` 两次
 
-### 3. 方式 B：DuckDB 原生 `$name` 命名参数（推荐日常）
+### 3. 方式 B：DuckDB 原生 `$name` 命名参数（推荐日常使用）
 
-如果不想依赖 `?` 的位置顺序，可以使用 DuckDB 原生 `$name` 命名参数。注意：当前实测中，这种写法直接查询 `source.orders` 同样会因为 Quack 下推丢失 schema 而失败，需要封装层处理。
+如果不想依赖 `?` 的位置顺序，可以使用 DuckDB 原生的 `$name` 命名参数。⚠️ 同样注意：当前实测中，直接查询 `source.orders` 会因为 Quack 下推丢失 schema 而失败。
 
 ```csharp
 using var cmd = connection.CreateCommand();
@@ -362,18 +394,18 @@ cmd.Parameters.Add(new DuckDBParameter { ParameterName = "limit", Value = 10 });
 using var reader = cmd.ExecuteReader();
 ```
 
-**特点**：
+**方式 B 的特点**：
 
 - ✅ SQL 可读性好，参数和值一一对应
 - ✅ 不依赖参数添加顺序
 - ✅ 不需要 Dapper 参与，适合只使用 DuckDB.NET 原生 API 的场景
-- ⚠️ 参数名使用 `$name`，不是 SQL Server / Npgsql 常见的 `@name`
+- ⚠️ 参数名使用 `$name`，**不是** SQL Server / Npgsql 常见的 `@name`
 
 ### 4. 方式 C：Dapper 的 `?name?` 伪位置参数
 
-Dapper 提供了一种 **pseudo-positional parameters** 语法：用 `?name?`（前后各一个 `?`）。这是 Dapper 的参数重写特性，不是 DuckDB SQL 自身的占位符语法。
+Dapper 提供了一种 **pseudo-positional parameters** 语法：用 `?name?`（前后各一个 `?`）。这是 **Dapper 的参数重写特性**，不是 DuckDB SQL 自身的占位符语法。
 
-注意：当前实测环境中，`connection.Query<T>()` 直接执行 `FROM source.orders WHERE ... ?status? ...` 没有跑通，报 `Values were not provided for the following prepared statement parameters`。因此不要把它作为“原生 Quack 直连必然可用”的写法。
+⚠️ 注意：当前实测环境中，`connection.Query<T>()` 直接执行 `FROM source.orders WHERE ... ?status? ...` 没有跑通，报 `Values were not provided for the following prepared statement parameters`。因此**不要把它作为"原生 Quack 直连必然可用"的写法**。
 
 ```csharp
 using Dapper;
@@ -396,7 +428,7 @@ foreach (var o in orders)
     Console.WriteLine($"{o.OrderId} {o.OrderStatus} {o.OrderAmount}");
 ```
 
-**特点**：
+**方式 C 的特点**：
 
 - ✅ 可读性好，参数和值一一对应
 - ✅ Dapper 内部会按 SQL 中 `?name?` 的出现位置绑定对应参数值
@@ -404,7 +436,7 @@ foreach (var o in orders)
 - ⚠️ 在 Dapper 本地参数重写语义中，同名参数多次出现时会复用同一个值；Quack 远端场景仍需实测
 - ⚠️ DTO 构造函数和属性映射要与查询列名匹配（详见下一章）
 
-### 5. 三种方式的对比
+### 5. 三种方式横向对比
 
 | 维度 | 方式 A（原生 `?`） | 方式 B（原生 `$name`） | 方式 C（Dapper `?name?`） |
 |---|---|---|---|
@@ -414,18 +446,18 @@ foreach (var o in orders)
 | 多次复用同名参数 | 要 `Add` 多次 | 写一次即可 | Dapper 语义下写一次即可，Quack 远端需封装层验证 |
 | 适合场景 | 简单 SQL、性能敏感 | 原生 DuckDB.NET 业务查询 | Dapper DTO 投影 |
 
-### 6. Quack 场景下的实测参数化结论
+### 6. Quack 场景下的实测结论：关键 ⚠️
 
-在当前 Quack v1.5.3 实测环境里：
+在当前 Quack v1.5.3 实测环境里，参数化查询有一个绕不开的限制：
 
 - `quack_query_by_name` 只支持两个参数：`quack_query_by_name(alias, sql)`。
 - `quack_query_by_name('remote', '... ? ...', value)` 不支持，会报函数签名不匹配。
-- 外层 `DuckDBParameter` 不会传给 `quack_query_by_name` 的内层 SQL。
+- **外层 `DuckDBParameter` 不会传给 `quack_query_by_name` 的内层 SQL**。
 - 现有 `@paramName -> ? / $1` 转换如果仍走 attached table 查询，也会遇到 schema 下推丢失问题。
 
-因此，当前可验证的做法是：对业务参数做强类型校验和 SQL literal 转义，然后生成完整远端 SQL，再交给 `quack_query_by_name`。这不是数据库层面的绑定参数，但比直接拼接用户输入安全；封装层必须只接受已校验类型，不允许把任意字符串当 SQL 片段拼进去。
+那么怎么办？当前可验证的做法是：**对业务参数做强类型校验和 SQL literal 转义，然后生成完整远端 SQL，再交给 `quack_query_by_name`**。这不是数据库层面的绑定参数，但比直接拼接用户输入安全得多——前提是**封装层必须只接受已校验类型，不允许把任意字符串当 SQL 片段拼进去**。
 
-实测通过示例：
+下面是一段实测通过的示例代码。注意每个辅助方法都做了类型约束和范围校验：
 
 ```csharp
 var status = SqlStringLiteral("completed");
@@ -472,7 +504,7 @@ static string SqlLimitLiteral(int value)
 }
 ```
 
-### 7. 错误对比：千万别这么写
+### 7. ⚠️ 千万别这么写：反面教材
 
 ```csharp
 // ❌ 错误 1：字符串拼接（SQL 注入风险）
@@ -490,11 +522,11 @@ cmd.Parameters.Add(new DuckDBParameter { Value = "completed" }); // 实际绑定
 
 ---
 
-## 七、类型映射与 NULL 注意事项
+## 七、类型映射与 NULL 处理
 
-### 1. .NET 类型 → DuckDB 类型
+### 1. .NET 类型 → DuckDB 类型映射
 
-`DuckDBParameter` 会根据 `Value` 的运行时类型自动推断。常见映射：
+`DuckDBParameter` 会根据 `Value` 的运行时类型自动推断。常见映射如下：
 
 | .NET 类型 | DuckDB 类型 |
 |---|---|
@@ -508,7 +540,9 @@ cmd.Parameters.Add(new DuckDBParameter { Value = "completed" }); // 实际绑定
 
 绝大多数场景**不需要手动指定 `DbType`**。
 
-### 2. NULL 怎么传
+### 2. NULL 怎么传？
+
+这是一个非常常见的坑——**C# 的 `null` 和数据库的 NULL 不是一回事**：
 
 ```csharp
 // ✅ 正确
@@ -518,13 +552,15 @@ cmd.Parameters.Add(new DuckDBParameter { Value = DBNull.Value });
 cmd.Parameters.Add(new DuckDBParameter { Value = null });
 ```
 
-读取时同样需要先判断：
+读取数据时同样需要**先判断 NULL 再取值**：
 
 ```csharp
 var userId = reader.IsDBNull(1) ? (long?)null : reader.GetInt64(1);
 ```
 
 ### 3. Dapper 强类型映射的构造函数建议
+
+如果你用 Dapper 做对象映射，关于 DTO 的定义方式有个小建议：
 
 ```csharp
 // record 也可能工作，但列名、构造函数参数名和 Dapper 版本要匹配
@@ -544,7 +580,7 @@ private sealed class OrderDto
 
 ## 八、SQL 方言陷阱：三段式列引用
 
-有些上游 SQL 生成器会输出 `schema.table.column` 形式的三段式列引用。DuckDB 在部分查询场景下会把 `source.orders` 作为 schema + table 解析，但在列限定符里继续写 `source.orders.created_at` 可能触发绑定错误。这个问题与具体 DuckDB 版本、SQL 形态和是否经过 Quack 远端解析有关，建议在目标版本上实际验证。
+有些上游 SQL 生成器会输出 `schema.table.column` 形式的三段式列引用。DuckDB 在部分查询场景下会把 `source.orders` 作为 schema + table 解析，但在列限定符里继续写 `source.orders.created_at` 可能触发绑定错误。这个问题与具体 DuckDB 版本、SQL 形态和是否经过 Quack 远端解析有关，**建议在目标版本上实际验证**。
 
 ```sql
 -- ✅ 表引用带 schema，列引用用短名
@@ -559,18 +595,20 @@ WHERE source.orders.created_at >= '2026-05-17';
 -- 可能出现 Binder Error，例如提示找不到 "source.orders" 这个表别名。
 ```
 
-实测结论：
+**实测结论**：
 
 - 直接 attached table 查询时，`FROM source.orders` 在当前环境下会下推成 `FROM orders` 并失败。
 - `WHERE source.orders.created_at ...` 会触发 Binder Error。
 - 使用 `quack_query_by_name('remote', 'SELECT ... FROM source.orders ...')` 可以让远端正确识别 `source.orders`。
 - 如果要改写三段式列引用，应在封装层做 SQL normalizer，并用目标版本实测。
 
-如果你有上游系统生成的 SQL 用了三段式，需要在 .NET 侧做规范化；可以把这类逻辑封装成独立的 SQL normalizer，在查询进入 DuckDB 前统一处理。
+💡 **实用建议**：如果你有上游系统生成的 SQL 用了三段式，需要在 .NET 侧做规范化。可以把这类逻辑封装成独立的 SQL normalizer，在查询进入 DuckDB 前统一处理。
 
 ---
 
-## 九、常见错误排查
+## 九、常见错误排查 🩺
+
+遇到报错不要慌，先对照下面的清单排查。
 
 ### 1. `Catalog Error: Table with name orders does not exist!`
 
@@ -606,9 +644,9 @@ WHERE source.orders.created_at >= '2026-05-17';
 
 **解决**：本地 DuckDB 查询可换成 `?` 位置参数、`$name` 命名参数或 Dapper `?name?`。Quack 远端查询要结合封装层实测，不能假设外层参数会传入 `quack_query_by_name` 的内层 SQL。
 
-### 6. DataGrip 能执行，但 .NET 客户端不能
+### 6. 🤔 DataGrip 能执行，但 .NET 客户端不能
 
-**原因**：工具的连接上下文可能默认就是远端 database，而 .NET 客户端是从本地 `:memory:` 起步。
+这是一个非常经典的困惑。**原因**：工具的连接上下文可能默认就是远端 database，而 .NET 客户端是从本地 `:memory:` 起步。
 
 **排查清单**：
 
@@ -621,19 +659,19 @@ WHERE source.orders.created_at >= '2026-05-17';
 
 ---
 
-## 十、最佳实践
+## 十、生产级最佳实践
 
 ### 1. 复用连接，不要每次查询都新建
 
 `LOAD/ATTACH` 都有成本（毫秒到百毫秒级）。建议：
 
-- 在应用启动时执行一次，把 `DuckDBConnection` 作为**单例**保存。
+- 在应用启动时执行一次初始化，把 `DuckDBConnection` 作为**单例**保存。
 - 后续所有查询复用这条连接。
-- 多线程并发查询时，不要假设同一个 `DuckDBConnection` 可以被多个线程随意共享。更稳妥的做法是串行化访问，或为并发工作单元创建独立连接并各自完成 `LOAD/ATTACH/USE` 初始化。
+- ⚠️ 多线程并发查询时，**不要假设同一个 `DuckDBConnection` 可以被多个线程随意共享**。更稳妥的做法是串行化访问，或为并发工作单元创建独立连接并各自完成 `LOAD/ATTACH/USE` 初始化。
 
-### 连接初始化错误处理
+#### 连接初始化的错误处理
 
-生产代码不要只把初始化 SQL 顺序写在主流程里，建议把连接初始化包成一个方法，并在异常里带上当前步骤，方便定位是扩展文件、LOAD、ATTACH、认证还是 `USE` 失败：
+生产代码不要只把初始化 SQL 顺序写在主流程里。建议**把连接初始化包成一个方法，并在异常里带上当前步骤**，方便快速定位是扩展文件、LOAD、ATTACH、认证还是 `USE` 失败：
 
 ```csharp
 static void ExecuteStep(DuckDBConnection connection, string stepName, string sql)
@@ -659,6 +697,8 @@ static void ExecuteStep(DuckDBConnection connection, string stepName, string sql
 
 ### 3. 大结果集改成流式读取
 
+当结果集很大时，**千万别一次性加载到内存**，应该边读边处理：
+
 ```csharp
 // ❌ 把整个结果加载到内存
 var all = new List<object[]>();
@@ -674,7 +714,7 @@ while (reader.Read())
 
 ### 4. 优先让过滤、聚合在远端执行
 
-目标是让过滤、聚合、排序和 `LIMIT` 尽量在远端执行，减少传输数据量。但当前 Quack v1.5.3 实测说明，直接 attached table 查询可能在下推时丢失 schema；因此需要用 `quack_query_by_name` 或封装层验证实际执行路径。
+目标是让过滤、聚合、排序和 `LIMIT` **尽量在远端执行**，减少传输数据量。但当前 Quack v1.5.3 实测说明，直接 attached table 查询可能在下推时丢失 schema；因此需要用 `quack_query_by_name` 或封装层验证实际执行路径。
 
 ```sql
 -- ✅ 远端执行：过滤、聚合、limit 都在远端
@@ -689,7 +729,7 @@ LIMIT 100;
 
 ### 5. SQL 注入安全
 
-`?` 位置参数、`$name` 命名参数和 `?name?` 伪位置参数在 DuckDB.NET / Dapper 层面都是真正的参数化，值不会被字符串拼接进 SQL。但如果你把 SQL 作为字符串传给 `quack_query_by_name(alias, sql)`，内层 SQL 不能再接收外层参数，此时必须由封装层负责安全生成 SQL，不能直接拼接用户输入。
+`?` 位置参数、`$name` 命名参数和 `?name?` 伪位置参数在 DuckDB.NET / Dapper 层面都是真正的参数化，值不会被字符串拼接进 SQL。但如果你把 SQL 作为字符串传给 `quack_query_by_name(alias, sql)`，**内层 SQL 不能再接收外层参数**，此时必须由封装层负责安全生成 SQL，不能直接拼接用户输入。
 
 ```csharp
 // ✅ 安全：参数值由 native 引擎绑定
@@ -703,9 +743,9 @@ cmd.CommandText = $"WHERE name = '{userInput}'";
 
 ## 十一、完整示例：可运行的 Console 项目
 
-把下面四个文件放在一起，配上扩展文件，就能跑：
+把下面两个文件放在一起，配上扩展文件，就能直接跑起来 👇
 
-**`Program.cs`**：
+### Program.cs
 
 ```csharp
 using DuckDB.NET.Data;
@@ -817,7 +857,7 @@ static string SqlLimitLiteral(int value)
 
 ```
 
-**`YourApp.csproj`**：
+### YourApp.csproj
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
@@ -840,19 +880,21 @@ static string SqlLimitLiteral(int value)
 
 ---
 
-## 十二、封装时建议拆分的代码
+## 十二、封装建议：生产项目应该怎么拆
 
-如果要把示例代码整理成生产可复用的组件，建议至少拆成这些职责：
+如果要把上面的示例代码整理成生产可复用的组件，建议至少拆成以下几个职责模块：
 
-- **连接管理**：集中处理 `LOAD` / `ATTACH` / `USE`，避免每个查询重复初始化。
-- **平台探测**：根据 OS 与 CPU 架构定位 `quack.duckdb_extension`。
-- **连接配置解析**：从配置或 secret 管理系统读取 host、port、token、alias、SSL 选项。
-- **SQL 方言规范化**：如上游 SQL 会生成三段式列引用，可在进入 DuckDB 前统一改写。
-- **参数转换**：如必须兼容上游 `@paramName` 风格，可在 provider 层转换成 `$paramName` 或 `?`。
+- 🔌 **连接管理**：集中处理 `LOAD` / `ATTACH` / `USE`，避免每个查询重复初始化。
+- 🖥️ **平台探测**：根据 OS 与 CPU 架构定位 `quack.duckdb_extension`。
+- 🔐 **连接配置解析**：从配置或 secret 管理系统读取 host、port、token、alias、SSL 选项。
+- 🔧 **SQL 方言规范化**：如上游 SQL 会生成三段式列引用，可在进入 DuckDB 前统一改写。
+- 🔄 **参数转换**：如必须兼容上游 `@paramName` 风格，可在 provider 层转换成 `$paramName` 或 `?`。
 
 ---
 
-## 十三、速查表
+## 十三、速查表 📋
+
+收藏这一段，随时查阅：
 
 ```text
 连接：DuckDBConnection("Data Source=:memory:")
@@ -877,3 +919,27 @@ static string SqlLimitLiteral(int value)
 | ❌ 不要用 | `WHERE c = @name` | DuckDB 不识别 |
 
 > 上表是 DuckDB.NET / Dapper 参数语法速查。若远端查询必须通过 `quack_query_by_name` 执行，内层 SQL 不能直接使用外层参数绑定。
+
+---
+
+## 📌 核心总结
+
+把这篇文章的要点浓缩成五句话：
+
+1. **连接链路是四层**：你的应用 → ADO.NET Provider → 本地 DuckDB → quack 扩展 → 远端服务。你不是直连远端，而是"先本地再远程"。
+
+2. **三个必踩的坑**：`@paramName` 不支持、`ATTACH` 后必须 `USE remote`、直接查 attached table 可能丢失 schema。
+
+3. **`quack_query_by_name` 是当前最可靠的远端查询方式**，但它只接受 `(alias, sql)` 两个字符串参数，外层参数绑定传不进去。
+
+4. **参数化的现实解法**：在封装层做强类型校验 + SQL literal 转义，生成完整 SQL 再交给远端。安全的前提是只接受已校验类型。
+
+5. **生产项目必须有封装层**：处理连接管理、平台探测、SQL 方言规范化和参数转换。不要把裸 SQL 散落在业务代码各处。
+
+---
+
+> 💬 **互动时间**
+>
+> 如果这篇文章对你有帮助，欢迎**点赞、在看、转发**给同样在和 DuckDB / Quack 搏斗的同事们！
+>
+> 你在接入 DuckDB / Quack 的过程中还遇到过什么坑？或者对封装层设计有什么想法？**欢迎在评论区留言交流**，我们一起探讨。
