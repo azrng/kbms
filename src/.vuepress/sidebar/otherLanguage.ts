@@ -19,22 +19,16 @@ export const otherLanguageSidebar =
             ]
         },
         {
-            text: "Shell",
-            prefix: "/otherLanguage/shell/",
-            collapsible: true,
-            children: ["shelljichu.md",
-                "bashjichuzhishi.md"]
-        },
-        {
-            text: "Java",
-            prefix: "/otherLanguage/java/",
-            collapsible: true,
-            children: ["readme.md"]
-        }, {
             text: "Golang",
             prefix: "/otherLanguage/golang/",
             collapsible: true,
             children: ["jichuzhishi.md",
                 "anzhuang.md"]
+        },
+        {
+            text: "Flutter",
+            prefix: "/otherLanguage/flutter/",
+            collapsible: true,
+            children: ["flutterInstall.md"]
         },
     ];
