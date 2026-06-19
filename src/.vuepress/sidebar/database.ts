@@ -20,11 +20,11 @@ export const dataBaseSidebar = [
     prefix: "/dataBase/extend/",
     collapsible: true,
     children: [
-      "jiejuefangan.md",
+      "solutions.md",
       "sqlOptimize.md",
-      "fenkufenbiao.md",
+      "sharding.md",
       "cacheDbConsistency.md",
-      "shujukuqianyi.md",
+      "databaseMigration.md",
       {
         text: "小工具",
         prefix: "/dataBase/extend/tools/",
@@ -48,7 +48,7 @@ export const dataBaseSidebar = [
           "hierarchyid.md"]
       },
       "dbhelper.md",
-      "tazhan.md",
+      "extensions.md",
       {
         text: "安装",
         prefix: "/dataBase/sqlserver/install/",
@@ -60,7 +60,7 @@ export const dataBaseSidebar = [
         ]
       },
       "issue.md",
-      "dingshibeifenjihua.md"
+      "scheduledBackupPlan.md"
     ]
   },
   {
@@ -273,19 +273,19 @@ export const dataBaseSidebar = [
     text: "MongoDB",
     prefix: "/dataBase/mongodb/",
     collapsible: true,
-    children: ["jieshao.md",
-      "gainianjiexi.md",
-      "shiyongchangjing.md",
-      "jibencaozuo.md",
-      "daimacaozuo.md",
-      "zhihangjihua.md",
+    children: ["introduction.md",
+      "conceptAnalysis.md",
+      "useCases.md",
+      "basicOperations.md",
+      "codeOperations.md",
+      "executionPlan.md",
       {
         text: "linux安装",
-        prefix: "/dataBase/mongodb/linuxanzhuang/",
+        prefix: "/dataBase/mongodb/linuxInstallation/",
         collapsible: true,
-        children: ["linuxanzhuang.md",
-          "windowsanzhuang.md",
-          "docker-composebushumongodb.md"]
+        children: ["linuxInstall.md",
+          "windowsInstall.md",
+          "dockerComposeDeployMongodb.md"]
       }]
   },
   {
