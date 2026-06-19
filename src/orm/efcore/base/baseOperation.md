@@ -1045,7 +1045,60 @@ await tran.CommitAsync();
 i.Dump();
 ```
 
-## 9. 参考文档
+## 9. Blazor 中的 DbContext 生命周期
+
+在 Blazor 中，DbContext 的生命周期与普通 Web 应用不同，需要注意。
+
+### 问题
+
+默认情况下，Blazor 使用 Scoped 注册 DbContext：
+
+- **Blazor Server**：DbContext 生命周期与 Circuit（用户连接会话）绑定，同一界面的添加和编辑操作在同一 DbContext 生命周期内
+- **Blazor WebAssembly**：Scoped 服务变成类似 Singleton 的行为
+
+这可能导致内存泄漏或实体追踪冲突。
+
+### 解决方案
+
+**方案一：注册为 Transient**
+
+```csharp
+services.AddTransient<IBaseRepository<Employee>, BaseRepository<Employee>>();
+```
+
+**方案二：显式创建新 DbContext**
+
+```csharp
+public async Task UpdateAsync(UpdateEmployeeVm vm)
+{
+    using var scope = _serviceScopeFactory.CreateScope();
+    var repository = scope.ServiceProvider.GetRequiredService<IBaseRepository<Employee>>();
+    // ... 后续操作
+}
+```
+
+**方案三：使用 AsNoTracking + 手动标记状态（推荐）**
+
+```csharp
+public async Task UpdateAsync(UpdateEmployeeVm vm)
+{
+    var entity = await _employeeRep.EntitiesNoTacking
+        .FirstOrDefaultAsync(t => t.Id == vm.Id);
+    if (entity is null)
+        throw new ArgumentException("员工标识无效");
+
+    entity.Sex = vm.Sex;
+    entity.City = vm.City;
+    entity.Name = vm.Name;
+
+    _employeeRep.Entry(entity).State = EntityState.Modified;
+    await _employeeRep.SaveChangesAsync();
+}
+```
+
+> 查询操作使用 `AsNoTracking`，修改操作显式控制实体状态，避免追踪冲突。
+
+## 10. 参考文档
 
 > 官方例子：[https://docs.microsoft.com/zh-cn/ef/core/dbcontext-configuration/](https://docs.microsoft.com/zh-cn/ef/core/dbcontext-configuration/)
 
