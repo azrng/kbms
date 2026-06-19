@@ -181,7 +181,7 @@ export const dataBaseSidebar = [
         text: "dotNet操作",
         prefix: "/dataBase/oracle/dotnetOperations/",
         collapsible: true,
-        children: ["dotnetcaozuo.md",
+        children: ["dotnetOperations.md",
           "oraclehelper.md"]
       },
       {
@@ -247,7 +247,7 @@ export const dataBaseSidebar = [
             text: "StackExchange",
             prefix: "/dataBase/redis/components/stackexchange/",
             collapsible: true,
-            children: ["shuiming.md",
+            children: ["description.md",
               "redishelper.md",
               "stackexchange_redis.md"]
           },
