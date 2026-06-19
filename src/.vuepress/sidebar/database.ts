@@ -214,38 +214,38 @@ export const dataBaseSidebar = [
       "readme.md",
       {
         text: "简单介绍",
-        prefix: "/dataBase/redis/jianchanjieshao/",
+        prefix: "/dataBase/redis/introduction/",
         collapsible: true,
         children: [
-          "neicunyouhua.md",
-          "chijiuhua.md"]
+          "memoryOptimization.md",
+          "persistence.md"]
       },
       {
         text: "Redis数据类型",
-        prefix: "/dataBase/redis/redisshujuleixing/",
+        prefix: "/dataBase/redis/redisDataTypes/",
         collapsible: true,
-        children: ["redisshujuleixing.md",
-          "zifuchuan.md",
-          "hashleixing.md",
-          "jigesortedset.md",
-          "jigeset.md",
-          "liebiaolist.md",
-          "hyperloglog.md"]
+        children: ["redisDataTypes.md",
+          "string.md",
+          "hash.md",
+          "sortedSet.md",
+          "set.md",
+          "list.md",
+          "hyperLogLog.md"]
       },
-      "jichumingling.md",
-      "redisfabudingyue.md",
-      "duolufuyong.md",
-      "redisxiaoxiduilie.md",
-      "quanwenjiansuo.md",
+      "basicCommands.md",
+      "redisPubSub.md",
+      "multiThreadReuse.md",
+      "redisMessageQueue.md",
+      "fullTextSearch.md",
       {
         text: "组件",
-        prefix: "/dataBase/redis/zujian/",
+        prefix: "/dataBase/redis/components/",
         collapsible: true,
-        children: ["jianchanshiyong.md",
+        children: ["simpleUsage.md",
           "freeredis.md",
           {
             text: "StackExchange",
-            prefix: "/dataBase/redis/zujian/stackexchange/",
+            prefix: "/dataBase/redis/components/stackexchange/",
             collapsible: true,
             children: ["shuiming.md",
               "redishelper.md",
@@ -257,13 +257,13 @@ export const dataBaseSidebar = [
       },
       {
         text: "安装",
-        prefix: "/dataBase/redis/anzhuang/",
+        prefix: "/dataBase/redis/installation/",
         collapsible: true,
         children: [
-          "bushufangan.md",
-          "windowskehuduan.md",
-          "linuxanzhuangredis.md",
-          "docker-composebushuredis.md"
+          "deploymentPlan.md",
+          "windowsClient.md",
+          "linuxInstallRedis.md",
+          "dockerComposeDeployRedis.md"
         ]
       },
       "issue.md"
