@@ -3,15 +3,15 @@
 
 export const webSidebar =
     [{
-        text: "web开发",
-        prefix: "/web/webkaifa/",
+        text: "Web 基础",
+        prefix: "/web/basics/",
         collapsible: true,
         children: [
             "http.md",
             "htmlgeshi.md",
             {
                 text: "单个代码解析",
-                prefix: "/web/webkaifa/changedaimajiexi/",
+                prefix: "/web/basics/changedaimajiexi/",
                 collapsible: true,
                 children:
                     [
@@ -28,10 +28,15 @@ export const webSidebar =
             "release.md"
         ]
     },
-        "javascript.md",
     {
-        text: "JQ",
-        prefix: "/web/jq/",
+        text: "JavaScript",
+        prefix: "/web/javascript/",
+        collapsible: true,
+        children: ["readme.md"]
+    },
+    {
+        text: "jQuery",
+        prefix: "/web/jquery/",
         collapsible: true,
         children: [
             "ajaxyibutongbu.md"
@@ -42,7 +47,8 @@ export const webSidebar =
         prefix: "/web/layui/",
         collapsible: true,
         children: ["shuiming.md"]
-    }, {
+    },
+    {
         text: "Vue",
         prefix: "/web/vue/",
         collapsible: true,
@@ -145,28 +151,34 @@ export const webSidebar =
             }]
     },
     {
-        text: "Npm",
-        prefix: "/web/npm/",
-        collapsible: true,
-        children:
-            [
-                "readme.md",
-                "pnpm.md",
-                {
-                    text: "部署",
-                    prefix: "/web/npm/build/",
-                    collapsible: true,
-                    children: [
-                        "script.md"
-                    ]
-                }]
-    },
-    {
-        text: "Nodejs",
-        prefix: "/web/nodejs/",
+        text: "开发工具",
+        prefix: "/web/tools/",
         collapsible: true,
         children: [
-            "install.md",
+            {
+                text: "NPM",
+                prefix: "/web/tools/npm/",
+                collapsible: true,
+                children: [
+                    "readme.md",
+                    "pnpm.md",
+                    {
+                        text: "构建",
+                        prefix: "/web/tools/npm/build/",
+                        collapsible: true,
+                        children: [
+                            "script.md"
+                        ]
+                    }]
+            },
+            {
+                text: "Node.js",
+                prefix: "/web/tools/nodejs/",
+                collapsible: true,
+                children: [
+                    "install.md"
+                ]
+            }
         ]
     }
 ];
