@@ -356,6 +356,7 @@ export const dataBaseSidebar = [
     collapsible: true,
     children: [
       "readme.md",
+      "basicOperations.md",
       "conceptAndCompare.md",
       "connectionSetup.md",
       "queryAndParameter.md",
