@@ -71,6 +71,7 @@ Quack 是 DuckDB 的**远程协议扩展**，让多个客户端可以共享同�
 
 | 文档 | 内容 |
 |------|------|
+| [基本操作：创建数据库、Schema 与表](basicOperations.md) | 创建数据库、Schema、表、插入数据、基本查询 |
 | [概念入门与对比](conceptAndCompare.md) | DuckDB/Quack 概念、与 SQL Server/PostgreSQL 对比 |
 | [客户端配置与连接](connectionSetup.md) | NuGet 包、扩展文件、连接字符串、quack_query 模式 |
 | [查询与参数化查询](queryAndParameter.md) | 基础查询、三种参数化方式、Quack 场景实测结论 |
