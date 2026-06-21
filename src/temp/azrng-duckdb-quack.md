@@ -18,6 +18,8 @@ tag:
 
 > 纯 C# 实现的 DuckDB Quack 协议 ADO.NET 提供程序，无需 native DLL 依赖。
 > 当前版本：**1.0.0-beta2**，多目标框架 `net8.0;net10.0`。
+>
+> ⚠️ **声明**：本项目是**个人学习项目**，目前**仅用于学习，尚未在生产环境中实际使用**。底层 Quack 协议本身也处于实验性阶段，请勿直接用于生产关键链路。
 
 ## 一、从 DuckDB 到 duckdb-quack
 
@@ -163,13 +165,20 @@ DuckDB 是列式引擎，`PrepareResponseMessage.results` 以**列式批（DataC
 - 角色：**客户端 Provider**。服务端仍然由 DuckDB + quack 扩展（C++）承担，本库负责让 .NET 应用作为客户端去连接、查询远程 DuckDB。
 - 价值：.NET 应用**无需引入任何 native DLL / C++ 依赖**，就能通过 Quack 协议访问远程 DuckDB；同时完全融入 ADO.NET / Dapper 生态，写法和用其他数据库几乎一致。
 
-### 3.2 项目来历（重要）
+### 3.2 项目来历与构建动机
+
+> ⚠️ **再次强调**：本项目是**个人学习项目**，目前**仅用于学习，尚未在生产环境中实际使用**。
+
+构建这个库主要出于两个动机：
+
+1. **学习 AI 协助编程**：把 AI 当作"结对工程师"，驱动它把一个真实的 C++ 项目（duckdb-quack）翻译/迁移成纯 C# 客户端，借此摸索 AI 在跨语言、跨范式工程迁移中的能力边界与协作方式——这本身也是这个项目最重要的目的之一。
+2. **不习惯 `DuckDB.NET.Data.Full` 连接 Quack 的方式**：官方 .NET 客户端 `DuckDB.NET.Data.Full` 本质是把 DuckDB 引擎（native libduckdb）嵌进进程；要用它连远程 Quack，得**先在本进程起一个本地 DuckDB 实例，再 `ATTACH 'quack:...'` 把远端挂进来**（见下文"性能对比"里的 Local 方案）。这种"套一层本地引擎再 ATTACH"的用法**比较麻烦，也不太符合大家以往用数据库（直连 + ADO.NET）的习惯**——每条连接都要拉起一个独立 DuckDB 实例，开销重、并发一高还会端口耗尽。所以才想做一个**直连 Quack 协议、像用普通数据库一样的纯 C# Provider**。
 
 本项目**基于 C++ 项目 duckdb-quack，通过 AI 辅助翻译/迁移到纯 C#**，整个过程**耗时约两天多**。
 
 需要说明的是，这里"翻译"的是 **duckdb-quack 中描述的客户端线协议逻辑**——连接握手、消息序列化、列式结果解码、LEB128 处理、Fetch 续读等——用 C# 重新实现一遍，使其成为一个独立的托管客户端。DuckDB 引擎本身和作为服务端的 quack 扩展依旧是 C++ 的，并未被重写。
 
-> 简单说：**C++ 写的服务端协议 → AI 辅助翻译成纯 C# 的客户端实现**，让 .NET 侧摆脱 native 依赖。
+> 简单说：**C++ 写的服务端协议 → AI 辅助翻译成纯 C# 的客户端实现**，让 .NET 侧摆脱 native 依赖、回到熟悉的直连体验。
 
 ### 3.3 功能特性一览
 
@@ -192,6 +201,73 @@ DuckDB 是列式引擎，`PrepareResponseMessage.results` 以**列式批（DataC
 | DuckDB 版本 | `1.5.3` |
 | Quack 版本 | `v1.5-variegata` |
 | Native ABI 版本 | `1` |
+
+### 3.5 性能对比（与 DuckDB.NET.Data.Full + ATTACH 方案）
+
+为了量化"直连协议"相对"套本地引擎 + ATTACH"的差距，作者用 BenchmarkDotNet 写了一组对比基准。
+
+> 📌 **对比范围说明**：下面的性能对比**仅限于 .NET 内部**两种 Quack 客户端写法——本库（纯 C# 直连协议）vs `DuckDB.NET.Data.Full`（套本地引擎 + `ATTACH`）。**没有与 Python / Java / Go 等其他语言的 Quack 客户端做性能对比**。本项目纯属学习用途，跨语言性能比较既不在目标范围内、也缺乏可比的统一条件（不同语言绑定的封装方式、native 引擎版本、运行时差异都很大），因此下文所有结论只代表".NET 里这两种方案谁更快"，不构成对其他语言客户端的评价。
+
+- 基准代码（公开）：https://github.com/azrng/dotnet-sample/tree/main/src/DuckDBQuackCompareBenchmarks
+- 结果汇总：仓库内 `BENCHMARK_RESULTS.md`
+
+#### 对比对象
+
+| 名称 | 实现 | 连 Quack 的方式 |
+|------|------|-----------------|
+| **Local** | `Quack.DuckDB`（基于 `DuckDB.NET.Data.Full` 1.5.3，含 native libduckdb） | 本进程起一个 DuckDB 实例 → `ATTACH 'quack:...'` 挂远端 → 包一层 SQL 查 attached catalog；**每个连接 = 一个独立 DuckDB 实例** |
+| **Azrng** | `Azrng.DuckDB.Quack` 1.0.0-beta2（纯 C#） | 直接说 Quack 协议，走 HTTP，共享连接池 |
+
+两者都被封装成 `DbConnection` / `DbCommand` / `DbDataReader`，基准里用同一个 `ExecuteReadFirstAsync(DbConnection, sql, ...)` helper 统一调用，**只换连接类型**，保证可比。
+
+#### 对比环境
+
+| 项目 | 配置 |
+|------|------|
+| 操作系统 | Windows 11 (10.0.26200.8655) |
+| CPU | Intel Core Ultra 7 255HX 2.40GHz（20 核 20 线程） |
+| 内存 | 16 GB |
+| .NET | SDK 10.0.301 / Runtime 10.0.9（X64 RyuJIT），启用 ServerGC |
+| BenchmarkDotNet | v0.15.8 |
+| DuckDB Server | DuckDB Quack 1.5.3（Docker，4 CPU / 8GB RAM） |
+| 测试日期 | 2026-06-21 |
+
+关键约束：**两个客户端共用同一个 Docker 容器**跑的 Quack 服务端（端口 9494），避免不同容器在调度/缓存/数据生命周期上的差异污染对比。默认连接串：`Host=localhost;Port=9494;Token=...;DisableSsl=true`。
+
+#### 对比了哪些方法（7 组基准）
+
+所有基准都带 `[MemoryDiagnoser]`，用 `SimpleJob(launchCount:1, warmupCount:2, iterationCount:3 或 5)`；行数/并发度用 `[Params]` 控制（如 10k/100k 行、4/16 并发）。
+
+| 组 | 代表方法 | 说明 |
+|----|----------|------|
+| Connection | `Local_OpenDispose` vs `Azrng_OpenDispose` | 新建并释放一条连接的代价 |
+| Query | `SELECT 1` / 参数化 `@a+@b` / 10k `COUNT,SUM` | 热连接下的查询延迟 |
+| ResultSet | 读取 10k / 100k 行 | reader 吞吐与分配 |
+| ReaderAccess | typed getters / `GetValue` / `GetValues`（仅 Azrng） | 隔离 reader 取值的分配 |
+| Concurrency | 4 / 16 并行 `SELECT 1` | 多个普通连接并发 |
+| Pool | `GetConnection`/`RentConnection` + 查询（仅 Azrng） | 连接池与 lease 模式开销 |
+| Insert | 逐行 / 批量 / 分页批量 INSERT（100 / 1000 行） | 批量 API 收益与 BatchSize 影响 |
+
+#### 两边方法大概是怎么写的
+
+- **Local（基于 DuckDB.NET.Data.Full）**：`QuackDuckDbConnection : DbConnection` 内部持有一个 `DuckDBConnection`；`Open()` 时在本进程创建一个本地 DuckDB 实例，执行 `ATTACH 'quack:host:port' AS catalog (TYPE quack, TOKEN '...', DISABLE_SSL ...)`；执行命令时把用户 SQL 包成对 attached catalog 的查询；**参数没有走 prepared binding，而是用正则把 `@p` 替换成转义后的 SQL 字面量**（`BuildResolvedSql` + `FormatParameterValue`）。所以每条连接都要先拉起一个 DuckDB 引擎实例，开销很重，并发时还会因每实例各自建链导致端口耗尽。
+- **Azrng**：`QuackConnection` 直接编码 Quack 消息、走 HTTP（进程级共享连接池 keep-alive），参数化查询走真正的参数绑定；批量插入是内置 API（`ExecuteBatchInsertAsync` / `ExecuteParameterizedBatchInsertAsync`）。
+
+#### 结果要点（详见仓库 `BENCHMARK_RESULTS.md`）
+
+| 场景 | 结论 |
+|------|------|
+| 连接建立 | Azrng ≈ 883µs，Local ≈ 66.7ms → **快约 75×**（Local 要拉起本地 DuckDB 实例） |
+| 简单查询 | Azrng ≈ 562µs，Local ≈ 5.37ms → **快约 10×**（但内存分配高 3–4×，HTTP 编解码开销） |
+| 结果集 10k 行 | Azrng 1.44ms vs Local 9.23ms → **快约 6.4×** |
+| 结果集 100k 行 | Azrng 10.1ms 完成；**Local 连接超时失败** |
+| 并发 Degree=4 | Azrng 630µs vs Local 17ms → **快约 27×** |
+| 并发 Degree=16 | Azrng 稳定（1.36ms）；**Local 失败**（每连接独立 DuckDB 实例致端口耗尽） |
+| 批量插入 100 行 | Azrng 批量 ≈ 1.86ms vs Local 逐行 ≈ 579ms → **快约 310×**；逐行 vs 批量也有 35–61× |
+
+> 已知限制：Azrng 的内存分配普遍比 Local 高 2–4×（HTTP 协议编解码的开销），这是"纯协议客户端"换"零 native 依赖、连接快、高并发稳"所付出的代价。
+>
+> 以上数字来自作者本机在特定条件下的测量，**仅作量级参考**，实际表现取决于网络、数据量、负载与机器配置。
 
 ## 四、duckdb-quack（C++）vs Azrng.DuckDB.Quack（C#）
 
@@ -570,4 +646,5 @@ dotnet test tests\Azrng.DuckDB.Quack.Tests\Azrng.DuckDB.Quack.Tests.csproj
 - Python API：https://duckdb.org/docs/lts/clients/python/overview.html
 - Java (JDBC)：https://duckdb.org/docs/current/clients/java.html
 - Go 驱动：https://github.com/marcboeker/go-duckdb
+- 性能对比基准代码：https://github.com/azrng/dotnet-sample/tree/main/src/DuckDBQuackCompareBenchmarks
 - 本库 NuGet：`Azrng.DuckDB.Quack`（MIT）
