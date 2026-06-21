@@ -72,7 +72,7 @@ ATTACH 'quack:localhost' AS remote;
 FROM remote.hello;          -- 查到服务端的 hello 表
 ```
 
-> **命名小贴士**：在 C++ 源码`docs/usage.md` 里，函数名还是 `rpc_start`/`rpc_stop`/`rpc_call`、端点是 `/rpc`；公开发布版统一改名为 `quack_serve`/`quack:`、端点 `/quack`，端口 `9494` 不变。这是同一套协议在不同阶段的命名演进，线协议本身（消息、LEB128、列式）是一致的。本文统一采用公开发布版的 `quack` 命名。
+> **命名小贴士**：在 C++ 源码早期文档 `docs/usage.md` 里，函数名仍是 `rpc_start`/`rpc_stop`/`rpc_call`、端点是 `/rpc`；当前公开文档已统一为 `quack_serve`/`quack_query`/`quack:`、端点 `/quack`，端口 `9494` 不变。本文统一采用当前公开文档里的 `quack` 命名。
 
 #### duckdb-quack 与 DuckDB 的关系
 
@@ -102,7 +102,7 @@ FROM remote.hello;          -- 查到服务端的 hello 表
 
 - 默认端口 **`9494`**，请求路径固定为 **`/quack`**；
 - 根据 `DisableSsl` 决定走 `http` 还是 `https`；
-- 客户端向 `http(s)://host:9494/quack` 发起 `POST`（请求体 `application/octet-stream`），把消息二进制编码后发送，服务端处理后返回二进制响应。
+- 客户端向 `http(s)://host:9494/quack` 发起 `POST`，请求和响应使用 DuckDB 内部序列化格式编码，服务端处理后返回二进制响应。
 
 > 这意味着 Quack 协议是建立在 HTTP 之上的**自定义二进制消息协议**，而不是 JDBC/ODBC 那种长连接协议，天然适配反向代理、网关等 HTTP 基础设施。
 
@@ -128,8 +128,8 @@ FROM remote.hello;          -- 查到服务端的 hello 表
 
 ### 2.3 认证：Token
 
-- 认证基于一个 **Token**（对应服务端的 `CREATE SECRET (TYPE quack, TOKEN '...')`）；
-- 客户端在连接字符串中携带 `Token=...`，连接建立时校验。
+- 认证基于一个 **Token**：服务端在 `quack_serve` 时自动生成或通过 `token := '...'` 显式设置；
+- DuckDB 客户端可通过 `CREATE SECRET`、`ATTACH ... (TOKEN '...')` 或 `quack_query(..., token := '...')` 传入 Token；本库则在连接字符串中携带 `Token=...`，连接建立时由服务端校验。
 
 ### 2.4 结果传输：列式（Arrow 风格）+ null 位图
 
@@ -141,7 +141,7 @@ DuckDB 是列式引擎，`PrepareResponseMessage.results` 以**列式批（DataC
 
 ### 2.5 线路编码：LEB128 变长整数
 
-协议中大量数值（包括 `result_uuid`、字段长度前缀等）使用 **LEB128 变长整数编码**紧凑传输，支持无符号（`ReadVarUInt`）与有符号（signed LEB128，`ReadVarInt`）两种。这也是 beta2 的修复重点——大结果集续读时涉及非规范 / signed LEB128 的重新编码处理。
+本库在实现 DuckDB 内部序列化格式时，需要处理 **LEB128 变长整数编码**，包括无符号（`ReadVarUInt`）与有符号（signed LEB128，`ReadVarInt`）两种读取逻辑。这也是 beta2 的修复重点之一——大结果集续读时涉及 `result_uuid` wire bytes 的保留与兼容处理。
 
 ### 2.6 大结果集：Fetch 续读
 
@@ -149,7 +149,7 @@ DuckDB 是列式引擎，`PrepareResponseMessage.results` 以**列式批（DataC
 
 - 首批随 `PrepareResponseMessage` 返回，并带 `needs_more_fetch` 标志；
 - 客户端据此反复发 `FetchRequestMessage(uuid)` 取下一批，直到取完；
-- 服务端按 `quack_fetch_batch_chunks`（默认 12 个 DataChunk）或 `quack_fetch_batch_bytes`（默认 4 MiB）打包，命中任一上限即返回一批。
+- 服务端按 `quack_fetch_batch_chunks`（当前公开 Reference 中默认 12 个 DataChunk）打包每批 `FETCH` 响应。
 
 ### 2.7 会话与多语句
 
@@ -281,9 +281,9 @@ DuckDB 是列式引擎，`PrepareResponseMessage.results` 以**列式批（DataC
 | 客户端运行前提 | 客户端必须是一个 DuckDB 实例（CLI / 嵌入式） | 任意 .NET 应用，**不需要装 DuckDB** |
 | 是否依赖 native | 是，依赖 DuckDB C++ 引擎 | **否，零 native DLL** |
 | 编解码实现 | 复用引擎内部类型：`DataChunk`、`LogicalType`、`MemoryStream`、序列化器、`http_util`、`logger` | 自行用 C# 实现：`QuackBinaryReader`、`ColumnarBatch`、消息序列化 |
-| 接入方式 | SQL 内 `ATTACH 'quack:...' AS remote` / `rpc_call()` | `QuackConnection` + ADO.NET / Dapper |
+| 接入方式 | SQL 内 `ATTACH 'quack:...' AS remote` / `quack_query()` | `QuackConnection` + ADO.NET / Dapper |
 | 查询下推 | `ATTACH` 支持 projection / filter 自动下推到服务端 | 直接下发用户写的 SQL（由服务端优化器处理） |
-| 部署体积 | native 二进制，按 OS / CPU 架构分别发布 | 托管 DLL，跨平台、AOT / trim 友好 |
+| 部署体积 | native 二进制，按 OS / CPU 架构分别发布 | 托管 DLL，跨平台部署更轻量 |
 | 项目目标 | 官方权威协议实现 | 纯 C# 客户端移植（学习） |
 
 ### 架构对照
@@ -352,7 +352,7 @@ DuckDB 是列式引擎，`PrepareResponseMessage.results` 以**列式批（DataC
 └──────────────────────────────────────────────────────────────┘
 ```
 
-- **传输层 `Internal/QuackHttpClient`**：用 `System.Net.Http.HttpClient` 向 `/quack` 发 `POST`（`application/octet-stream`）；进程级共享连接池（keep-alive 复用 TCP，避免高并发下临时端口耗尽），支持外部注入 `HttpClient`、自定义超时与 SSL/TLS（可关证书校验或指定自签 CA）。
+- **传输层 `Internal/QuackHttpClient`**：用 `System.Net.Http.HttpClient` 向 `/quack` 发 `POST`；进程级共享连接池（keep-alive 复用 TCP，避免高并发下临时端口耗尽），支持外部注入 `HttpClient`、自定义超时与 SSL/TLS（可关证书校验或指定自签 CA）。
 - **编解码层 `Internal/QuackBinaryReader`**：手写无符号/有符号 LEB128、字段 ID、VarInt 长度前缀 UTF-8 字符串、字节块读取；`Internal/ColumnarBatch` 用 typed 原生数组 + 按位 null 位图承载列式结果，避免装箱。
 - **协议桥层 `IQuackProtocolBridge`**：把 ADO.NET 语义映射为线协议消息——`ConnectAsync`→建立会话、`ExecuteQueryAsync`→`PrepareRequestMessage(sql)`、`FetchAsync`→`FetchRequestMessage(uuid)`、`CloseSessionAsync`→`DisconnectMessage`。
 - **ADO.NET 表面层**：标准 `DbConnection`/`DbCommand`/`DbDataReader` 等，因此天然兼容 Dapper、DI、`ILogger`。
@@ -372,13 +372,13 @@ DuckDB 是列式引擎，`PrepareResponseMessage.results` 以**列式批（DataC
 ### 5.4 这样做的收益
 
 - **零 native**：不打包 `libduckdb`（按 OS/CPU 架构几十 MB 的二进制），容器镜像更小、CI 更简单；
-- **跨平台一致**：一个托管 DLL 跑遍 Windows / Linux / macOS，AOT 与 trimming 友好（无 P/Invoke、无 cgo）；
-- **无版本漂移**：不会出现"客户端 native 库与服务端 DuckDB 版本错配"的问题；
+- **跨平台部署更轻量**：一个托管 DLL 可运行在 Windows / Linux / macOS，不需要随平台分发 `libduckdb`；
+- **减少 native 版本错配风险**：客户端侧不内嵌 DuckDB native 引擎，但仍需要和服务端 Quack 协议版本保持兼容；
 - **生态契合**：原生融入 ADO.NET / Dapper / 依赖注入 / `ILogger`，迁移成本低。
 
 ## 六、其他语言如何连接 Quack（及官方文档地址）
 
-由于 quack 是 DuckDB 的扩展，**任何语言的官方 DuckDB 客户端绑定都能用它**——这些绑定的共同点是：**内部都打包了 native 的 `libduckdb`（C++ 引擎）**。用法套路统一：装客户端 → `INSTALL quack`（首次使用会自动安装/加载）→ `CREATE SECRET` 设 Token → `ATTACH 'quack:...'`。
+由于 quack 是 DuckDB 的扩展，DuckDB 文档列出的主流客户端只要能安装/加载扩展并执行 SQL，通常就可以通过 `ATTACH 'quack:...'` 或 `quack_query(...)` 使用 Quack。它们的共同点是：客户端进程里仍会运行 DuckDB native 引擎。用法套路大体是：装客户端 → `INSTALL quack`（首次使用也可能自动安装/加载）→ 设置 Token → `ATTACH 'quack:...'` 或调用 `quack_query(...)`。
 
 > 客户端驱动总览（含各语言支持等级与最新版本）：
 > https://duckdb.org/docs/current/clients/overview.html
@@ -423,12 +423,12 @@ try (Connection con = DriverManager.getConnection("jdbc:duckdb:");
 
 ### 6.3 Go
 
-Go 驱动 [`github.com/marcboeker/go-duckdb`](https://github.com/marcboeker/go-duckdb) 通过 **cgo 链接 native `libduckdb`**，配合标准库 `database/sql`：
+DuckDB 当前文档中的 Go 客户端是 [`github.com/duckdb/duckdb-go/v2`](https://github.com/duckdb/duckdb-go)，配合标准库 `database/sql` 使用。由于 Quack 是 DuckDB 扩展，这种方式本质上仍是在 Go 进程内运行 DuckDB 客户端，再通过 SQL 使用 Quack：
 
 ```go
 import (
     "database/sql"
-    _ "github.com/marcboeker/go-duckdb"
+    _ "github.com/duckdb/duckdb-go/v2"
 )
 
 db, _ := sql.Open("duckdb", "")
@@ -439,18 +439,18 @@ rows, _ := db.Query("FROM remote.hello")
 // ...
 ```
 
-文档：客户端总览 https://duckdb.org/docs/current/clients/overview.html ；驱动仓库 https://github.com/marcboeker/go-duckdb
+文档：Go Client https://duckdb.org/docs/current/clients/go.html ；驱动仓库 https://github.com/duckdb/duckdb-go
 
 ### 6.4 与 Azrng.DuckDB.Quack 的对比
 
-| 项 | Python / Java / Go 官方客户端 | Azrng.DuckDB.Quack |
+| 项 | Python / Java / Go 等 DuckDB 客户端 | Azrng.DuckDB.Quack |
 |----|-------------------------------|--------------------|
 | 引擎依赖 | **内含 native `libduckdb`（C++）** | 无 native，纯托管 |
 | 接入范式 | 套个进程内 DuckDB，再 `ATTACH 'quack:...'` | 直接当远程数据库用 |
 | 协议实现 | 复用引擎里的 C++ quack 客户端 | 自实现 C# 编解码 |
 | 部署 | 按平台带 native 二进制 | 单托管 DLL，跨平台 |
 
-> 理论上任何语言都能像 Azrng 这样写一个**纯协议客户端**（协议是开放文档化的），从而摆脱 native 引擎；
+> 从工程上看，其他语言也可以按公开文档与源码实现一个类似的**纯协议客户端**，从而在客户端侧摆脱 native 引擎；但 Quack 仍处于实验阶段，协议和默认行为可能变化，实际维护成本需要单独评估。
 
 ## 七、安装
 
@@ -464,7 +464,7 @@ dotnet add package Azrng.DuckDB.Quack
 |------|------|:----:|--------|
 | `Host` | 服务器地址 | ✓ | - |
 | `Port` | 端口号 | | `9494` |
-| `Token` | 认证令牌（对应服务端 SECRET） | ✓ | - |
+| `Token` | 认证令牌（对应服务端 `quack_serve` 使用或生成的 token） | ✓ | - |
 | `Catalog` | 默认数据库，每次查询自动切换（见下方说明） | | - |
 | `DisableSsl` | 是否禁用 SSL | | `true` |
 | `TimeoutSeconds` | 超时时间（秒） | | `30` |
@@ -645,6 +645,7 @@ dotnet test tests\Azrng.DuckDB.Quack.Tests\Azrng.DuckDB.Quack.Tests.csproj
 - 各语言客户端总览：https://duckdb.org/docs/current/clients/overview.html
 - Python API：https://duckdb.org/docs/lts/clients/python/overview.html
 - Java (JDBC)：https://duckdb.org/docs/current/clients/java.html
-- Go 驱动：https://github.com/marcboeker/go-duckdb
+- Go Client：https://duckdb.org/docs/current/clients/go.html
+- Go 驱动仓库：https://github.com/duckdb/duckdb-go
 - 性能对比基准代码：https://github.com/azrng/dotnet-sample/tree/main/src/DuckDBQuackCompareBenchmarks
 - 本库 NuGet：`Azrng.DuckDB.Quack`（MIT）
