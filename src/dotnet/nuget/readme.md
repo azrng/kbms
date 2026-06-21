@@ -274,6 +274,33 @@ xxx
 </PropertyGroup>
 ```
 
+#### SemVer 2.0 版本规范
+
+NuGet 遵循 SemVer 2.0：`MAJOR.MINOR.PATCH[-prerelease]`。
+
+**预发布阶梯（alpha → beta → rc → stable）**
+
+```
+2.0.0-alpha  →  2.0.0-alpha.1  →  2.0.0-alpha.2  …
+            →  2.0.0-beta  →  2.0.0-beta.1  …
+            →  2.0.0-rc.1  →  2.0.0-rc.2
+            →  2.0.0          （正式版，去掉后缀）
+```
+
+- 继续 alpha 迭代：`2.0.0-alpha.1`、`2.0.0-alpha.2`……（注意 `2.0.0-alpha` < `2.0.0-alpha.1`，所以加 `.1` 是合法的上行 bump，NuGet 不会覆盖）
+- 功能基本就绪：跳到 `2.0.0-beta`、`2.0.0-rc.1`
+- 发布：`2.0.0`
+
+> **约定建议**：每次推 nuget 都单调递增、不能覆盖。所以下一次至少 `2.0.0-alpha.1`。
+
+**正式版之后的 bump 规则**
+
+| 改动类型 | 版本号 | 例子 |
+| --- | --- | --- |
+| 向后兼容的 bug 修复 | PATCH +1 | 2.0.0 → 2.0.1 |
+| 向后兼容的新功能 | MINOR +1 | 2.0.1 → 2.1.0 |
+| 不兼容的 API 变更 | MAJOR +1 | 2.1.0 → 3.0.0（其预发布走 3.0.0-alpha → …） |
+
 ### 语义化版本控制
 语义化版本控制规范：[https://semver.org/lang/zh-CN/](https://semver.org/lang/zh-CN/)
 
