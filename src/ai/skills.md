@@ -228,10 +228,38 @@ project/
 
 ## 开发、调试与平台协作
 
-### aspnet-core
+### dotnet/skills
 
-- **说明**：用于 `ASP.NET Core` 项目的设计、重构、排错与升级，覆盖 API、Blazor、鉴权等场景。
-- **来源**：GitHub：https://github.com/openai/skills/blob/main/skills/.curated/aspnet-core/SKILL.md
+- **来源**：GitHub：https://github.com/dotnet/skills
+- **安装**：`codex plugin marketplace add dotnet/skills`
+
+#### 第一优先级（推荐安装）
+
+| Skill | 说明 |
+| --- | --- |
+| `dotnet-aspnetcore` | ASP.NET Core 项目的设计、重构、排错与升级，包含 `Microsoft.NET.Sdk.Web`、MVC/Razor、中间件/Filter 样例。 |
+| `dotnet-test` | 跑测试、过滤、覆盖率、测试缺口分析等，适合有测试项目的仓库。 |
+| `dotnet-msbuild` | 多项目、多 TFM 构建排查，覆盖项目引用、binlog、`Directory.Build` 等问题。 |
+| `dotnet-upgrade` | 版本升级与迁移，适合 `netcoreapp3.1`/`net6.0`/`net7.0`/`net8.0`/`net10.0` 混合场景。 |
+| `dotnet-nuget` | 依赖管理、Central Package Management 迁移。 |
+
+#### 第二优先级（按需安装）
+
+| Skill | 说明 |
+| --- | --- |
+| `dotnet-data` | EF Core query optimization，做数据库访问优化时装。 |
+| `dotnet-diag` | 性能分析、dump、trace、benchmark 场景。 |
+
+#### 按需安装
+
+| Skill | 适用场景 |
+| --- | --- |
+| `dotnet-blazor` | 做 Blazor 时装 |
+| `dotnet-ai` | 做 .NET AI / MCP / LLM 集成时装 |
+| `dotnet-template-engine` | 写或维护 `dotnet new` 模板时装 |
+| `dotnet-maui` | 做 MAUI 时装 |
+| `dotnet11` | 明确试 .NET 11 新 API / 从 .NET 10 升 .NET 11 时装 |
+| `dotnet` | 主要包含 `csharp-scripts`、`dotnet-pinvoke`、`nuget-trusted-publishing`，非必装基础包 |
 
 ### github
 
