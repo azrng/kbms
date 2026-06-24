@@ -272,6 +272,12 @@ PDFgear是一款功能全面、易于使用的免费PDF软件。它能对PDF文�
 
 网址：https://www.pdfgear.com/
 
+#### Stirling PDF
+
+Stirling PDF 是一个功能强大的开源 PDF 编辑平台。可作为个人桌面应用程序在浏览器中运行，或者使用私有 API 部署在自己的服务器上。支持编辑、签名、编校、转换和自动化 PDF，无需将文档发送到外部服务，保护文档隐私。
+
+仓库地址：[https://github.com/Stirling-Tools/Stirling-PDF](https://github.com/Stirling-Tools/Stirling-PDF)
+
 ### 二维码工具
 
 - [草料二维码生成器](https://cli.im/)
