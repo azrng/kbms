@@ -181,7 +181,7 @@ var sql = "SELECT * FROM my_table v WHERE  NOT (v.visit_state_id =ANY(@notValidV
 var dapperParam = new DynamicParameters();
 dapperParam.Add("@notValidVisitCodes", ids);// 这里使用list或者array都可以
 
-// 查询不在这个集合的账号
+// 查询account 不等于 @Ids 数组中的任意一个元素
 var sql = "select count(1) from  sample.\"user\" where account !=ANY(@Ids)";
 var result = await connection.QueryAsync(sql, new { Ids = ids.ToArray() });
 ```
