@@ -10,22 +10,31 @@ author: azrng
 
 本目录收录各类 AI 提示词，按用途分类整理。
 
-## 文本提示词
+## 提示词网站
 
-| 文件 | 说明 |
-|------|------|
-| [prompt-writing.md](text/prompt-writing.md) | 提示词编写指南和方法论 |
-| [coding-experts.md](text/coding-experts.md) | 编程技术专家（C# .NET、数据库、IT架构、Shell） |
-| [content-creation.md](text/content-creation.md) | 内容创作（公众号运营、自媒体运营） |
-| [project-docs.md](text/project-docs.md) | 项目文档生成（README、SDD、架构图HTML） |
-| [lifestyle.md](text/lifestyle.md) | 生活服务（情感陪伴、健康食谱） |
-| [fun.md](text/fun.md) | 趣味提示词 |
+[opennana-gallery](https://zhenglarry007.github.io/opennana-gallery/index.html) [aiwind](https://www.aiwind.org/)
 
-## 图片提示词
+## 提示词编写
 
-| 文件 | 说明 |
-|------|------|
-| [id-photos.md](images/id-photos.md) | 证件照（领导干部风格、领英商务照） |
-| [art-photos.md](images/art-photos.md) | 个人艺术照（汉服、故宫写真、韩式九宫格、JK） |
-| [posters.md](images/posters.md) | 海报（游戏海报、动漫海报） |
-| [doraemon.md](images/doraemon.md) | 哆啦A梦主题 |
+提示词网站
+
+将Ai当成一个医生看待，你需要
+
+* 找对科室
+  * 假设你是健身教练
+  * 假设你是一个.Net技术专家
+  * 假设你是一个谈过10000次恋爱的情感达人
+  * 也可以让AI去扮演一个具体的人(前提这个人得足够出名)
+* 说明病情：你的现状、期望效果、你的预算
+  * 我是一个体重90kg的男性，我想在接下来三个月内，减重10斤，只有每周两次时间去健身房，每次一个小时
+* 请求开药
+  * 请帮我列一个减肥计划
+  * 请帮我列一个提升计划
+* 治疗方式
+  * 用表格的形式列出你的回答
+  * 用电子邮件格式回答我
+* 好好说话
+  * 拟合同：一正式口吻，措辞严谨、专业
+  * 工作汇报：用尊敬且自信的口吻
+* 参考范例
+  * 参考某一个示例，某一段话
