@@ -26,6 +26,14 @@ OpenDeepWiki是一款基于 .NET 10 和 AgentFramework 构建的 AI 驱动代码
 
 在线演示：https://koala.token-ai.cn/
 
+## Office办公
+
+### ppt-master
+
+AI将文档或主题转化为真实的原生PowerPoint演示文稿——配备原生形状、过渡和动画，按需提供数据支持的图表和表格，演讲者笔记的音频解说，并支持您自己的.pptx模板
+
+github：https://github.com/hugohe3/ppt-master
+
 ## 网站设计
 
 ### readdy
