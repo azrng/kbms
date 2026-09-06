@@ -10,30 +10,8 @@ export const aiSidebar = [
         collapsible: true,
         children: [
             "readme.md",
-            {
-                text: "文本提示词",
-                prefix: "text/",
-                collapsible: true,
-                children: [
-                    "prompt-writing.md",
-                    "coding-experts.md",
-                    "content-creation.md",
-                    "project-docs.md",
-                    "lifestyle.md",
-                    "fun.md",
-                ]
-            },
-            {
-                text: "图片提示词",
-                prefix: "images/",
-                collapsible: true,
-                children: [
-                    "id-photos.md",
-                    "art-photos.md",
-                    "posters.md",
-                    "doraemon.md",
-                ]
-            },
+            "lifePrompt.md",
+            "workPrompt.md",
         ]
     },
     "modeTools.md",
@@ -61,6 +39,8 @@ export const aiSidebar = [
             "memoryAndRag.md",
             "hosting.md",
             "advancedFeatures.md",
+            "evaluationAndObservability.md",
+            "realWorldCases.md",
             "projectIntegration.md",
         ]
     },
