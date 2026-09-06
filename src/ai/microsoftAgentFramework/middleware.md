@@ -17,7 +17,7 @@ tag:
 
 # 中间件与可观测性
 
-> 源码快照：`fa9e0865`（2026-06-06），可通过 `git diff fa9e08657` 查看后续变更
+> 源码快照：`2c49f50cf`（2026-09-04，包版本 1.20.0），可通过 `git diff 2c49f50cf` 查看后续变更
 >
 > 示例代码：`agent-framework/dotnet/samples/02-agents/Agents/Agent_Step11_Middleware/`
 >
@@ -107,19 +107,21 @@ Web 应用只有一条管道，但 Agent 的情况更复杂——一次 Agent �
 using Microsoft.Agents.AI;
 
 var agent = chatClientAgent.AsBuilder()
-    .Use(async (innerAgent, messages, session, options, ct, next) =>
+    .Use(async (messages, session, options, next, ct) =>
     {
         // 前置处理：请求还没到 Agent 之前
         Console.WriteLine($"请求消息数: {messages.Count()}");
 
-        var response = await next(innerAgent, messages, session, options, ct);
+        // next 不接收 innerAgent，返回 Task（不是 Task<AgentResponse>）
+        await next(messages, session, options, ct);
 
         // 后置处理：Agent 返回结果之后
         Console.WriteLine("响应完成");
-        return response;
     })
     .Build();
 ```
+
+注意共享重载的委托形态：参数顺序是 `(messages, session, options, next, ct)`，`next` 是 `Func<messages, session, options, CancellationToken, Task>`。它同时服务于流式与非流式调用，但拿不到、也改写不了响应结果——需要接触响应对象时，请用下面的分离重载（`Use(runFunc, runStreamingFunc)`）。
 
 ## 链式中间件
 
@@ -149,39 +151,51 @@ var agent = chatClientAgent.AsBuilder()
             AutoApprovalRules =
             [
                 // 例：自动批准所有只读操作（函数名以 "Get" 开头的）
-                call => new ValueTask<bool>(call.Name.StartsWith("Get"))
-            ]
+                // 规则参数是 ToolAutoApprovalRuleContext，函数名经 ctx.FunctionCallContent.Name 获取
+                ctx => new ValueTask<bool>(ctx.FunctionCallContent.Name.StartsWith("Get"))
+            ],
+            // 安全阀：限制单次运行内"自动审批 → 重新调用 Agent"的循环次数，
+            // 防止模型反复请求自动放行的工具导致无上限的模型调用
+            MaxAutoApprovalIterations = 10
         })
-    .UseAIContextProviders(     // 上下文注入（自动注入时间、用户信息等）
-        new TimeContextProvider(),
-        new CustomRagProvider())
+    .UseAIContextProviders(     // 上下文注入（下面这个是示例项目里的自定义 Provider，定义见后文）
+        new DateTimeContextProvider())
     .UseLogging(loggerFactory) // 日志记录
     .Build();
 ```
 
+::: warning 哪些是内置、哪些是自定义
+`UseOpenTelemetry` / `UseToolApproval` / `UseAIContextProviders` / `UseLogging` 是框架内置扩展；但 `TimeContextProvider`、`CustomRagProvider` 这类具体的 Provider **并不是框架内置类型**，它们只是示例项目里的自定义类（如下文的 `DateTimeContextProvider`，继承 `MessageAIContextProvider` 即可自制）。
+:::
+
+::: warning AutoApprovalRules 类型
+`AutoApprovalRules` 的元素类型是 `Func<ToolAutoApprovalRuleContext, ValueTask<bool>>`，规则入参是 `ToolAutoApprovalRuleContext`（描述待审批的工具调用及其运行上下文），不是 `FunctionCallContent` 本身。规则按顺序求值，第一条返回 `true` 即自动放行；由于规则可能仅按函数名匹配，要注意避免无关同名工具被误放行。
+:::
+
 `UseToolApproval()` 支持三种审批机制：
 
 1. **Standing Rule**：用户手动审批后选择"Don't ask again"，后续同类调用自动放行
-2. **Auto-Approval Rules**：通过 `ToolApprovalAgentOptions.AutoApprovalRules` 配置启发式规则，满足条件的自动放行
+2. **Auto-Approval Rules**：通过 `ToolApprovalAgentOptions.AutoApprovalRules` 配置启发式规则，满足条件的自动放行；`MaxAutoApprovalIterations` 用于限制自动审批触发的重新调用循环
 3. **手动审批**：每次都需要用户确认（默认行为）
 
 ## 自定义中间件
 
 ```csharp
-// 使用匿名中间件
+// 使用匿名中间件（共享重载：只能改请求，改不了响应）
 var agent = chatClientAgent.AsBuilder()
-    .Use(async (innerAgent, messages, session, options, ct, next) =>
+    .Use(async (messages, session, options, next, ct) =>
     {
-        // 修改请求：注入当前时间
+        // 修改请求：注入当前时间（记得把修改后的 messages 传给 next）
         messages = messages.Append(new ChatMessage(ChatRole.System, "当前时间: " + DateTime.Now));
 
-        var response = await next(innerAgent, messages, session, options, ct);
-
-        // 修改响应：这里可以做后处理
-        return response;
+        await next(messages, session, options, ct);
     })
     .Build();
 ```
+
+::: tip 想改响应怎么办？
+共享重载的 `next` 返回 `Task`，响应结果由框架从内层 Agent 收集，匿名函数接触不到。若需要读取或改写响应，请改用分离重载 `Use(runFunc, runStreamingFunc)`（见下文 Agent Run Middleware 一节），它的 `runFunc` 返回 `Task<AgentResponse>`。
+:::
 
 ## 1. IChatClient Middleware（模型推理级）
 
@@ -584,7 +598,7 @@ public class LoggingAgent : DelegatingAIAgent
 | --- | --- | --- |
 | `LoggingAgent` | 记录请求和响应日志 | `.UseLogging()` |
 | `OpenTelemetryAgent` | 采集分布式追踪和指标 | `.UseOpenTelemetry()` |
-| `FunctionInvokingAgent` | 处理函数调用循环 | 自动集成 |
+| `FunctionInvocationDelegatingAgent`（internal） | 处理函数调用循环 | 自动集成 |
 | `ToolApprovalAgent` | 工具审批（支持自动规则） | `.UseToolApproval()` |
 
 ### AIAgentBuilder 内部机制
@@ -607,12 +621,14 @@ public AIAgent Build(IServiceProvider? services = null)
 
 ```csharp
 // 重载 1：共享函数（同时处理 Run 和 Streaming）
-AIAgentBuilder Use(Func<Messages, Session, Options, Func<...>, CT, Task> sharedFunc)
+// next 是 Func<messages, session, options, CT, Task>，不接收 innerAgent、不返回响应
+// 用法：.Use(async (messages, session, options, next, ct) => { ...; await next(messages, session, options, ct); })
+AIAgentBuilder Use(Func<IEnumerable<ChatMessage>, AgentSession?, AgentRunOptions?, Func<IEnumerable<ChatMessage>, AgentSession?, AgentRunOptions?, CancellationToken, Task>, CancellationToken, Task> sharedFunc)
 
-// 重载 2：分离的 Run / Streaming 函数
+// 重载 2：分离的 Run / Streaming 函数（可拿到 innerAgent，runFunc 返回 Task<AgentResponse> 可改写响应）
 AIAgentBuilder Use(
-    Func<Messages, Session, Options, AIAgent, CT, Task<AgentResponse>>? runFunc,
-    Func<Messages, Session, Options, AIAgent, CT, IAsyncEnumerable<AgentResponseUpdate>>? runStreamingFunc)
+    Func<IEnumerable<ChatMessage>, AgentSession?, AgentRunOptions?, AIAgent, CancellationToken, Task<AgentResponse>>? runFunc,
+    Func<IEnumerable<ChatMessage>, AgentSession?, AgentRunOptions?, AIAgent, CancellationToken, IAsyncEnumerable<AgentResponseUpdate>>? runStreamingFunc)
 
 // 重载 3：直接传入 Agent 工厂
 AIAgentBuilder Use(Func<AIAgent, AIAgent> agentFactory)
@@ -624,45 +640,60 @@ AIAgentBuilder Use(Func<AIAgent, AIAgent> agentFactory)
 ## 重试中间件
 
 ```csharp
+// 共享重载：拿不到响应对象，重试只能基于异常
 var agent = chatClientAgent.AsBuilder()
-    .Use(async (innerAgent, messages, session, options, ct, next) =>
+    .Use(async (messages, session, options, next, ct) =>
     {
         int retryCount = 0;
         const int maxRetries = 3;
 
-        while (retryCount < maxRetries)
+        while (true)
         {
             try
             {
-                return await next(innerAgent, messages, session, options, ct);
+                await next(messages, session, options, ct);
+                return;
             }
-            catch (HttpRequestException ex) when (retryCount < maxRetries - 1)
+            catch (HttpRequestException) when (retryCount < maxRetries - 1)
             {
                 retryCount++;
                 await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, retryCount)), ct);
             }
         }
-
-        throw new InvalidOperationException("超过最大重试次数");
     })
     .Build();
 ```
 
+::: warning
+共享重载中即使 `await next(...)` 正常返回，也代表"这一层管道走完了"，重试逻辑只能依赖异常触发。若需要在响应结果层面判断并重试（比如根据 `AgentResponse` 内容决定是否重跑），请改用分离重载，在 `runFunc` 中自行调用 `innerAgent.RunAsync`。
+:::
+
 ## 请求/响应修改
 
 ```csharp
+// 请求修改：共享重载即可（next 返回 Task，无需接触响应）
 var agent = chatClientAgent.AsBuilder()
-    .Use(async (innerAgent, messages, session, options, ct, next) =>
+    .Use(async (messages, session, options, next, ct) =>
     {
         // 注入额外上下文
         messages = messages.Prepend(new ChatMessage(ChatRole.System,
             $"当前用户: {GetCurrentUser()}, 时间: {DateTime.Now}"));
 
-        var response = await next(innerAgent, messages, session, options, ct);
-
-        // 后处理响应
-        return response;
+        // 记得把修改后的 messages 传给 next
+        await next(messages, session, options, ct);
     })
+    .Build();
+
+// 响应修改：需要分离重载（runFunc 返回 Task<AgentResponse>）
+var agentWithPostProcess = chatClientAgent.AsBuilder()
+    .Use(async (messages, session, options, innerAgent, ct) =>
+    {
+        var response = await innerAgent.RunAsync(messages, session, options, ct);
+
+        // 后处理响应……
+        return response;
+    },
+    runStreamingFunc: null)
     .Build();
 ```
 
@@ -720,13 +751,11 @@ Console.WriteLine($"Function calling response: {functionCallResponse}");
 ## 日志记录
 
 ```csharp
-// 方式一：在创建 Agent 时传入 LoggerFactory
+// 方式一：在创建 Agent 时传入 LoggerFactory（LoggerFactory 是 ChatClientAgent 的构造参数，不是 ChatClientAgentOptions 的属性）
 ChatClientAgent agent = new ChatClientAgent(
     chatClient,
-    new ChatClientAgentOptions
-    {
-        LoggerFactory = loggerFactory
-    }
+    new ChatClientAgentOptions(),
+    loggerFactory
 );
 
 // 方式二：通过 AIAgentBuilder
@@ -790,13 +819,13 @@ builder.Services.AddChatClient(chatClient)
 框架提供 `Microsoft.Agents.AI.DevUI` 包，提供交互式 Web 调试界面。
 
 ```xml
-<PackageReference Include="Microsoft.Agents.AI.DevUI" Version="1.9.0" />
+<PackageReference Include="Microsoft.Agents.AI.DevUI" Version="1.20.0" />
 ```
 
 ### DevUI + Aspire 集成（v1.9.0 新增）
 
 ```xml
-<PackageReference Include="Aspire.Hosting.AgentFramework.DevUI" Version="1.9.0" />
+<PackageReference Include="Aspire.Hosting.AgentFramework.DevUI" Version="1.20.0" />
 ```
 
 ```csharp
@@ -838,3 +867,7 @@ Agent Framework 的 Middleware 不是为了"让 Agent 更复杂"，而是让复�
 | ToolApproval 自动审批规则 | `6bd2cfec` | `UseToolApproval()` 新增 `AutoApprovalRules`，支持通过启发式函数自动批准工具调用 |
 | OpenTelemetry 自动接入 | `37a043a7` | `OpenTelemetryAgent` 现在自动把底层 `IChatClient` 也包装上遥测，Agent 和 ChatClient 级别的 span 自动关联 |
 | IChatMessageInjector | `0557b578` | 新增消息注入能力，支持在函数调用循环中注入额外消息 |
+| 审批原语下沉 MEAI | `09473fa7e` | 审批相关原语下沉到 Microsoft.Extensions.AI，并要求审批响应绑定所对应请求的 RequestId，防止错配 |
+| 工具审批中间件转正 | `b3f2e5392` | `ToolApprovalAgent` 转为正式 API；`AutoApprovalRules` 元素类型改为 `Func<ToolAutoApprovalRuleContext, ValueTask<bool>>`，函数名经 `ctx.FunctionCallContent.Name` 获取 |
+| MaxAutoApprovalIterations | `74a144085` | `ToolApprovalAgentOptions` 新增自动审批循环次数上限，防止"自动放行 → 重新调用"无限制循环 |
+| Feature-usage 位图 | `43b3ce602` | 框架内部用 bitmask 记录 feature 使用情况（如 CompactionProvider 等是否被用到），用于实验特性收敛 |

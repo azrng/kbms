@@ -173,7 +173,7 @@ public class MyService(
 }
 ```
 
-## OAuth 授权集成（v1.9.0 新增）
+## OAuth 授权集成
 
 基于 OAuth 2.0 scope 的 Agent 和工具级授权。
 
@@ -216,7 +216,7 @@ public string ListExpenses()
 
 OAuth 配置支持 Keycloak（开发环境）和 Microsoft Entra ID（生产环境）。
 
-## M365 Agent 集成（v1.9.0 新增）
+## M365 Agent 集成
 
 将 Agent 部署到 Microsoft Teams 和 Copilot。
 
@@ -229,19 +229,24 @@ OAuth 配置支持 Keycloak（开发环境）和 Microsoft Entra ID（生产环�
 // - Agents Playground 测试
 ```
 
-## OpenTelemetry + Aspire 监控集成（v1.9.0 新增）
+完整样例见主仓库 `dotnet/samples/05-end-to-end/M365Agent`（已从 `dotnet/samples/M365Agent` 迁移）。
+
+## OpenTelemetry + Aspire 监控集成
 
 ```csharp
 // Program.cs
 var builder = WebApplication.CreateBuilder(args);
 
 // 添加 OpenTelemetry
+// 注意 Agent Framework 的 ActivitySource 名为 "Experimental.Microsoft.Agents.AI"（OpenTelemetryConsts.DefaultSourceName），
+// gen_ai 指标由底层 Microsoft.Extensions.AI 的 OpenTelemetryChatClient 发出（Meter 名 "Microsoft.Extensions.AI"），
+// Agent Framework 本身不创建 Meter
 builder.Services.AddOpenTelemetry()
     .WithTracing(tracing => tracing
-        .AddSource("Microsoft.Agents.AI")
+        .AddSource("Experimental.Microsoft.Agents.AI")
         .AddOtlpExporter())
     .WithMetrics(metrics => metrics
-        .AddMeter("Microsoft.Agents.AI")
+        .AddMeter("Microsoft.Extensions.AI")
         .AddOtlpExporter());
 
 // 添加 Agent 并启用遥测
@@ -293,4 +298,4 @@ public async IAsyncEnumerable<string> SafeAnalyzeStreamAsync(string input)
 - 使用 `ChatHistoryProvider` 管理对话历史，避免无限增长
 - 启用压缩管道（Compaction Pipeline）管理 token 消耗
 - 对于重复请求，考虑实现缓存层
-- 生产环境启用 `RequirePerServiceCallChatHistoryPersistence` 支持崩溃恢复
+- 生产环境启用 `RequirePerServiceCallChatHistoryPersistence`（`ChatClientAgentOptions` 选项）支持崩溃恢复；自定义管线中可用更便捷的 `ChatClientBuilder.UsePerServiceCallChatHistoryPersistence()` 扩展方法直接挂接每服务调用持久化装饰器

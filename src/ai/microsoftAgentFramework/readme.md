@@ -2,7 +2,7 @@
 title: 概述
 lang: zh-CN
 date: 2025-04-25
-update: 2026-06-06
+update: 2026-09-06
 publish: true
 author: azrng
 isOriginal: true
@@ -22,9 +22,9 @@ tag:
 >
 > 官方文档：[Microsoft Agent Framework](https://github.com/microsoft/agents)
 >
-> 当前版本：**1.9.0**，要求 .NET 10.0 SDK
+> 当前版本：**1.20.0**，要求 .NET 10.0 SDK
 >
-> 源码快照：`fa9e0865`（2026-06-06），可通过 `git diff fa9e08657` 查看后续变更
+> 源码快照：`2c49f50cf`（2026-09-04），可通过 `git diff 2c49f50cf` 查看后续变更
 
 ## 概述
 
@@ -40,9 +40,9 @@ Microsoft Agent Framework 是一个用于构建 AI Agent 的高级框架，提�
 - **可观测性**：内置 OpenTelemetry、Aspire Dashboard、Grafana 支持
 - **中间件管道**：通过 `AIAgentBuilder` 构建处理管道
 - **声明式定义**：支持 YAML 定义 Agent 和工作流
-- **托管部署**：支持 Azure Functions、Durable Task、M365、AG-UI 等部署方式
+- **托管部署**：支持 ASP.NET Core、A2A、AG-UI、OpenAI 兼容端点、M365 等部署方式（Azure Functions/Durable Task 集成已迁至独立扩展仓库）
 - **代码执行沙箱**：通过 Hyperlight 实现安全的 CodeAct 模式
-- **评估框架**：内置质量评估、Red Teaming、多模态评估
+- **评估框架**：内置质量评估、Foundry Adaptive Evals（rubric 自适应评估）
 - **Harness 一站式 Agent**：预配置管道，集成函数调用、压缩、工具审批、遥测等
 
 ## 文档目录
@@ -57,7 +57,7 @@ Microsoft Agent Framework 是一个用于构建 AI Agent 的高级框架，提�
 | [工作流](workflows.md) | WorkflowBuilder、扇出/扇入、条件路由、可视化 |
 | [中间件](middleware.md) | AIAgentBuilder 管道、日志、OpenTelemetry、DevUI |
 | [记忆与 RAG](memoryAndRag.md) | AIContextProvider、向量存储、GraphRAG、压缩管道 |
-| [托管部署](hosting.md) | Azure Functions、Durable Task、M365、OAuth、AG-UI 托管 |
+| [托管部署](hosting.md) | AddAIAgent/MapA2A/AG-UI/OpenAI 兼容托管、会话存储与隔离（Durable Task 已迁出至独立仓库） |
 | [高级特性](advancedFeatures.md) | 结构化输出、Skills、声明式、Harness、沙箱执行、压缩管道 |
 | [评估与可观测性](evaluationAndObservability.md) | 评估框架、OpenTelemetry、Aspire Dashboard、Grafana、Red Teaming |
 | [实战案例](realWorldCases.md) | 营销内容生成、旅行助手、Foundry Local、M365 Agent 等生产案例 |
@@ -67,22 +67,32 @@ Microsoft Agent Framework 是一个用于构建 AI Agent 的高级框架，提�
 
 ```xml
 <!-- Agent Framework 核心 -->
-<PackageReference Include="Microsoft.Agents.AI" Version="1.9.0" />
-<PackageReference Include="Microsoft.Agents.AI.Abstractions" Version="1.9.0" />
-<PackageReference Include="Microsoft.Agents.AI.OpenAI" Version="1.9.0" />
+<PackageReference Include="Microsoft.Agents.AI" Version="1.20.0" />
+<PackageReference Include="Microsoft.Agents.AI.Abstractions" Version="1.20.0" />
+<PackageReference Include="Microsoft.Agents.AI.OpenAI" Version="1.20.0" />
 
 <!-- 工作流 -->
-<PackageReference Include="Microsoft.Agents.AI.Workflows" Version="1.9.0" />
+<PackageReference Include="Microsoft.Agents.AI.Workflows" Version="1.20.0" />
 
 <!-- 托管 -->
-<PackageReference Include="Microsoft.Agents.AI.Hosting" Version="1.9.0" />
-<PackageReference Include="Microsoft.Agents.AI.Hosting.AzureFunctions" Version="1.9.0" />
+<PackageReference Include="Microsoft.Agents.AI.Hosting" Version="1.20.0" />
+<PackageReference Include="Microsoft.Agents.AI.Hosting.AzureFunctions" Version="1.20.0" />
 
 <!-- 高级功能 -->
-<PackageReference Include="Microsoft.Agents.AI.Harness" Version="1.9.0" />
-<PackageReference Include="Microsoft.Agents.AI.Hyperlight" Version="1.9.0" />
-<PackageReference Include="Microsoft.Agents.AI.AzureAI.Persistent" Version="1.9.0" />
-<PackageReference Include="Microsoft.Agents.AI.Foundry.Hosting" Version="1.9.0" />
+<PackageReference Include="Microsoft.Agents.AI.Harness" Version="1.20.0" />
+<PackageReference Include="Microsoft.Agents.AI.Hyperlight" Version="1.20.0" />
+<PackageReference Include="Microsoft.Agents.AI.AzureAI.Persistent" Version="1.20.0" />
+<PackageReference Include="Microsoft.Agents.AI.Foundry.Hosting" Version="1.20.0" />
+
+<!-- 快照后新增的包（均为预发布版本，可用浮动版本号引用） -->
+<!-- AGENT-HOOKS-0.1 拦截协议（alpha/实验性）：在 agent/model-call/tool-call 三个切面做 fail-closed 策略拦截 -->
+<PackageReference Include="Microsoft.Agents.AI.AgentHooks" Version="1.20.0-alpha.*" />
+<!-- 本地 Python CodeAct 执行 + AST 校验（preview）：需外部沙箱环境，与 Hyperlight 互补 -->
+<PackageReference Include="Microsoft.Agents.AI.LocalCodeAct" Version="1.20.0-preview.*" />
+<!-- Valkey 聊天历史持久化（alpha）：基于 IConnectionMultiplexer -->
+<PackageReference Include="Microsoft.Agents.AI.Valkey" Version="1.20.0-alpha.*" />
+<!-- Azure Blob Storage 会话持久化（preview，hosting 扩展） -->
+<PackageReference Include="Microsoft.Agents.AI.Hosting.AzureStorage" Version="1.20.0-preview.*" />
 ```
 
 ## 官方示例路径
@@ -92,16 +102,24 @@ agent-framework/dotnet/
 ├── samples/
 │   ├── 01-get-started/              # 6 步入门教程
 │   ├── 02-agents/                   # Agent 深入
-│   │   ├── Agents/                  # Agent 核心 API（21 步）
-│   │   ├── AgentProviders/          # 多提供商
-│   │   ├── AgentsWithFoundry/       # Foundry 专项（27 步）
+│   │   ├── Agents/                  # Agent 核心 API（24 步，含 AgentMode、TodoList、MultiModelRouting）
+│   │   ├── AgentProviders/          # 多提供商（原 AgentWithAnthropic/AgentWithOpenAI/AgentsWithFoundry 已并入）
+│   │   │   ├── anthropic/           # Anthropic Claude
+│   │   │   ├── openai/              # OpenAI
+│   │   │   ├── foundry/             # Foundry（原 Foundry 专项示例）
+│   │   │   ├── azure/               # Azure OpenAI / Azure AI
+│   │   │   ├── github-copilot/      # GitHub Copilot
+│   │   │   ├── google-gemini/       # Google Gemini
+│   │   │   ├── ollama/              # Ollama 本地模型
+│   │   │   ├── onnx/                # ONNX 本地模型
+│   │   │   ├── a2a/                 # A2A 提供商
+│   │   │   ├── custom/              # 自定义提供商
+│   │   │   └── dapr/                # Dapr
 │   │   ├── AgentSkills/             # 技能系统（5 步）
 │   │   ├── AgentWithMemory/         # 记忆功能（5 步）
 │   │   ├── AgentWithRAG/            # RAG 集成（5 步）
 │   │   ├── AgentWithCodeAct/        # CodeAct 沙箱执行（3 步）
 │   │   ├── AgentOpenTelemetry/      # OpenTelemetry 集成
-│   │   ├── AgentWithAnthropic/      # Anthropic Claude
-│   │   ├── AgentWithOpenAI/         # OpenAI 原生 SDK（6 步）
 │   │   ├── AGUI/                    # Agent UI 协议
 │   │   ├── A2A/                     # Agent-to-Agent 协议
 │   │   ├── DeclarativeAgents/       # 声明式 Agent
@@ -137,7 +155,7 @@ agent-framework/dotnet/
 │       ├── DevUIAspireIntegration/  # DevUI Aspire 集成
 │       ├── Evaluation/              # 端到端评估
 │       └── M365Agent/               # M365 Agent
-└── src/                             # 35+ NuGet 包源码
+└── src/                             # 约 40 个 NuGet 包源码（39 个 Microsoft.Agents.* 项目 + Aspire.Hosting.AgentFramework.DevUI 等）
 ```
 
 ## 学习案例路径

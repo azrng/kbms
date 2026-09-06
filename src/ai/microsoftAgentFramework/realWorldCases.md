@@ -236,7 +236,7 @@ Anthropic Managed Agent 架构模式的实现，Brain/Hands/Session 三层分离
 
 ### 使用场景
 
-- 已使用 Azure AI Foundry 的团队
+- 已使用 Microsoft Foundry 的团队
 - 需要完全托管的无运维方案
 - 企业级凭证安全管理
 
@@ -253,3 +253,5 @@ Anthropic Managed Agent 架构模式的实现，Brain/Hands/Session 三层分离
 | 安全评估验证 | FoundryLocalPipeline (Red Teaming) |
 | OAuth 授权 | AspNetAgentAuthorization |
 | M365/Teams 集成 | M365Agent |
+
+AspNetAgentAuthorization 和 M365Agent 样例位于主仓库 `dotnet/samples/05-end-to-end/` 目录（M365Agent 已从 `dotnet/samples/M365Agent` 迁移至此）。此外该目录还新增了 DevUIAspireIntegration（DevUI + Aspire 集成）、AgentWithPurview（数据安全与合规）、Evaluation（自动化评估）、AGUIWebChat（AG-UI Web 聊天）等端到端样例，可作为补充参考。
