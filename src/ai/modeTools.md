@@ -130,6 +130,77 @@ ollama run deepseek-r1:8b
 
 其他自定义配置文件可以看：[Ollama本地部署DeepSeek-R1:14b完全指南](Ollama本地部署DeepSeek-R1:14b完全指南)
 
+## pi
+
+仓库地址：https://github.com/earendil-works/pi
+
+### 扩展
+
+#### @narumitw/pi-plan-mode
+
+规划模式，锁死写权限逼我先想清楚
+
+```
+pi install npm:@narumitw/pi-plan-mode
+```
+
+
+#### pi-memory
+
+把记忆存成 markdown 文件，跨会话不忘事
+
+```
+pi install npm:pi-memory
+```
+
+#### pi-web-access
+
+提供网页搜索、正文抓取、来源核验、GitHub 仓库读取、PDF 提取，以及 YouTube 和本地视频理解。
+
+```bash
+pi install npm:pi-web-access
+```
+
+#### pi-mcp-adapter
+
+一个代理工具接整个 MCP 生态
+
+```
+pi install npm:pi-mcp-adapter
+```
+
+
+
+#### pi-subagents
+
+派子 agent 干审查、侦察这类活
+
+```
+pi install npm:pi-subagents
+```
+
+
+
+#### @narumitw/pi-btw
+
+旁路提问，不打断主线任务
+
+```
+pi install npm:@narumitw/pi-btw
+```
+
+
+
+#### @narumitw/pi-file-context
+
+圈精确文件行喂上下文，不整文件刷屏
+
+```
+pi install npm:@narumitw/pi-file-context
+```
+
+
+
 ## Claude Code
 
 参考资料：https://www.yuque.com/xiaoyou-nwu1w/ooi105/bwakf9w86vzuoace
