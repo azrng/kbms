@@ -15,6 +15,7 @@ tag:
 ## Skills 商城
 
 * skillsmp：https://skillsmp.com/zh
+* skillstore：https://skillstore.io/zh-hans
 
 ## Superpowers 详解
 
