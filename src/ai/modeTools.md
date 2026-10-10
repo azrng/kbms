@@ -199,7 +199,50 @@ pi install npm:@narumitw/pi-btw
 pi install npm:@narumitw/pi-file-context
 ```
 
+## omp
 
+### 安装
+
+```
+irm https://omp.sh/install.ps1 | iex
+```
+
+### 配置主题
+
+```
+omp config set theme.dark catppuccin-macchiato
+omp config get theme.dark
+```
+
+### 全局设置中文
+
+查询安装目录
+
+```
+omp config path
+```
+
+然后去这个目录下增加AGENTS.md，加入内容
+
+```
+# 全局语言规范
+
+1. 默认使用简体中文与用户交流。
+2. 任务计划、执行说明、分析摘要、问题诊断、
+   代码修改说明、测试结果及最终总结均使用中文。
+3. 不要无故输出英文标题、英文解释或英文总结。
+4. 代码、类名、方法名、API、命令、文件路径及
+   日志原文保留原始语言。
+5. 英文报错应保留原文，并提供中文原因分析。
+6. 代码注释和 XML 文档注释优先使用简体中文，
+   除非项目已有明确的语言规范。
+7. 用户明确指定其他语言时，以用户要求为准。
+
+# 语言强制规则
+
+所有面向用户的自然语言说明默认使用简体中文。
+保留代码、命令、接口名称及日志原文的原始格式。
+```
 
 ## Claude Code
 
