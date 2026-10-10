@@ -244,6 +244,20 @@ omp config path
 保留代码、命令、接口名称及日志原文的原始格式。
 ```
 
+### 性能处理
+
+#### 关闭 OMP 终端标题动画
+
+在 OMP 外部的 PowerShell 运行：
+
+```
+omp config set tui.titleState false
+```
+
+随后关闭 OMP，重新启动。
+
+这会禁用终端标题中的运行状态动画，不会关闭 Agent 的任务执行能力。尤其适合排查 Windows 任务栏卡顿问题
+
 ## Claude Code
 
 参考资料：https://www.yuque.com/xiaoyou-nwu1w/ooi105/bwakf9w86vzuoace
