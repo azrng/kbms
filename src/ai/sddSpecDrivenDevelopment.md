@@ -1,4 +1,17 @@
-# AGI SDD 规范驱动开发：本质到底是什么？
+---
+title: AGI SDD 规范驱动开发：本质到底是什么？
+lang: zh-CN
+date: 2025-01-01
+publish: true
+author:  azrng
+isOriginal: true
+category:
+  - sdd
+  - ai
+  - llm
+tag:
+  - 大模型
+---
 
 > 📌 作者：Jeffcky（汪鹏）｜JeffckyShare 公众号  
 > 📅 2026年3月｜AGI SDD 系列入门篇  
