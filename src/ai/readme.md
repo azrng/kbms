@@ -1,22 +1,42 @@
 ---
-title: 说明
+title: AI
 lang: zh-CN
-date: 2025-01-01
+date: 2026-10-12
 publish: true
-author:  azrng
+author: azrng
 isOriginal: true
 category:
-  - soft
   - ai
-  - llm
 tag:
+  - ai
   - 大模型
 ---
+
+# AI
+
+本板块收录大模型、编码智能体、生态协议、应用工具与提示词相关内容。
+
+## 板块导航
+
+- [llm/](./llm/) —— 模型与部署
+- [codingAgents/](./codingAgents/) —— 编码智能体
+- [ecosystem/](./ecosystem/) —— Skills 与 MCP
+- [apps/](./apps/) —— 应用工具
+- [prompts/](./prompts/) —— 提示词库
+- [microsoftAgentFramework/](./microsoftAgentFramework/) —— 框架系列
+- [projects.md](./projects.md) —— 项目与学习
+
+其他专题文档：
+
+- [sddSpecDrivenDevelopment.md](./sddSpecDrivenDevelopment.md)
+- [harness-engineering.md](./harness-engineering.md)
+- [sse-streaming-spec.md](./sse-streaming-spec.md)
+- [dotNetCall.md](./dotNetCall.md)
+- [pythonCall.md](./pythonCall.md)
+
 ## 概述
 
 大模型AI（Large Model AI）是指具有大量参数和复杂结构的人工智能模型。这些模型通常基于深度学习技术，能够处理大量数据并从中学习复杂的模式和关系。大模型AI通过其庞大的参数量和深层次的网络结构，能够在多个领域中表现出卓越的性能。
-
-
 
 LLM(大语言模型) 是在大量数据上训练的深度学习模型，能够理解和生成类似人类的文本。 这些模型可以执行各种任务，例如文本完成、摘要、分类和参与对话。
 

@@ -1,15 +1,14 @@
 ---
 title: Skills
 lang: zh-CN
-date: 2026-04-12
+date: 2026-10-12
 publish: true
 author: azrng
 isOriginal: true
 category:
   - ai
-  - skill
 tag:
-  - 辅助
+  - skill
 ---
 
 ## Skills 商城
@@ -320,9 +319,6 @@ project/
 
 - **说明**：用于复盘执行效果并持续优化提示、流程和行为策略。
 - **来源**：GitHub：https://github.com/peterskoett/self-improving-agent
-
-
-- **说明**：在 Claude Code / OpenClaw / Cursor 中直接运行 agency-orchestrator YAML 工作流，无需 API key。
 
 ## 内容、生活与个人效率
 

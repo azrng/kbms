@@ -1,16 +1,21 @@
 ---
 title: 大语言模型
 lang: zh-CN
-date: 2025-02-27
+date: 2026-10-12
 publish: true
-author:  azrng
+author: azrng
 isOriginal: true
 category:
   - ai
-  - llm
 tag:
   - 大模型
 ---
+
+> 本目录围绕大语言模型的选型与落地展开，覆盖：**模型平台 → 命名解读 → 部署**。
+>
+> - 本页：模型平台、主流厂商与嵌入模型
+> - [模型命名与量化解读](./modelGuide.md)：模型名称、量化后缀的含义与嵌入模型对比
+> - [模型部署](./deploy.md)：本地 / 云平台 / 容器化部署与 Ollama、vLLM、LM Studio 等工具
 
 ## 模型平台
 
@@ -20,13 +25,13 @@ tag:
 
 [硅基流动](https://cloud.siliconflow.cn/models)
 
-###  Hugging Face
+### Hugging Face
 
 是一个综合性AI平台，提供了大量的预训练模型，还支持模型训练、微调、部署等功能。适合开发者或研究人员，需要对模型进行深度定制和优化，或者需要使用丰富的工具和库进行开发。
 
-[https://huggingface.co/](https://huggingface.co/)  
+[https://huggingface.co/](https://huggingface.co/)
 
-国内镜像站：[https://hf-mirror.com/](https://hf-mirror.com/)  、[https://www.modelscope.cn/](https://www.modelscope.cn/models)
+国内镜像站：[https://hf-mirror.com/](https://hf-mirror.com/) 、[https://www.modelscope.cn/](https://www.modelscope.cn/models)
 
 如果想下载GGUF文件搜索的时候记得带上GGUF，例如deepseek-r1-8b-gguf
 
@@ -40,11 +45,13 @@ tag:
 
 LLM中转服务可用性：[https://relaypulse.top/](https://relaypulse.top/)
 
-## 阿里云
+## 厂商
+
+### 阿里云
 
 qwen2.5-7b(通义千问)
 
-## 智谱
+### 智谱
 
 官网地址：https://open.bigmodel.cn/
 
@@ -52,48 +59,29 @@ ANTHROPIC接口地址：https://open.bigmodel.cn/api/anthropic
 
 OpenAi编码套餐地址：https://open.bigmodel.cn/api/coding/paas/v4
 
-
-## llama
+### llama
 
 llama3.2：由 Meta 开发的开源人工智能模型系列，向量维度值为3072
 
-## DeepSeek
+### DeepSeek
 
 * **DeepSeek-R1**：专注于逻辑推理、问题解决和教育工具，教育平台、研究工具
 * **DeepSeek-Coder**：IDE集成、编程平台，专注于编程辅助，包括代码生成、调试和优化
 
 DeepSeek生态全家桶来：https://github.com/deepseek-ai/awesome-deepseek-integration
 
-### 模型命名解读
-
-以下是对“DeepSeek-R1-Distill-Qwen-1.5B-GGUF”和“DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M”模型名称的详细解释：
-
-##### 1. **DeepSeek-R1-Distill-Qwen-1.5B**
-
-- **DeepSeek-R1**：这是 DeepSeek 团队开发的模型系列，R1 表示模型版本。
-- **Distill**：表示该模型是通过知识蒸馏技术从更大的模型（如 DeepSeek-R1）中蒸馏而来。蒸馏过程使模型体积更小，但保留了大部分性能。
-- **Qwen-1.5B**：表示该模型基于 Qwen 架构，参数量为 15 亿。这种架构在推理任务中表现出色。
-
-##### 2. **DeepSeek-R1-Distill-Qwen-1.5B-GGUF**
-
-- **GGUF**：表示模型采用了 GGUF 格式（General GPU Format），这是一种高效的模型存储格式，支持多种量化方式。
-- **适用场景**：这种格式的模型适合在资源受限的环境中运行，例如低配硬件设备。
-
-##### 3. **DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M**
-
-- **Q4_K_M**：表示模型采用了 4-bit 量化技术（Q4），并通过 K-Means 聚类优化。这种量化方式显著降低了模型的显存占用，同时保持较高的性能。
-- **适用场景**：这种量化版本适合在显存有限的设备上运行，例如仅使用核显的设备
-
 ## 嵌入模型
 
 如何查找中文嵌入模型：[https://blog.csdn.net/2401_85378759/article/details/144737938](https://blog.csdn.net/2401_85378759/article/details/144737938)
+
+各模型的向量维度与适用场景对比见 [模型命名与量化解读](./modelGuide.md)。
 
 ### bge-m3
 
 向量维度1024
 
 ```shell
-ollama pull bge-m3
+ollama pull bge-m3
 ```
 
 ### text-embedding-3-large
@@ -120,7 +108,7 @@ mxbai-embed-large:335m： 嵌入模型
 - 适合需要快速推理和低资源消耗的场景，如实时搜索和推荐系统。
 - 由于其较小的模型尺寸，适合在边缘设备或移动设备上部署。
 
-#### 1. **all-MiniLM-L6-v2**
+#### all-MiniLM-L6-v2
 
 - **特点**：这是一个轻量级模型，具有6层Transformer结构，输出384维的嵌入向量。
 - **优点**：
@@ -131,7 +119,7 @@ mxbai-embed-large:335m： 嵌入模型
   - 对计算资源有限制（如在边缘设备或低配置服务器上运行）。
   - 任务对精度要求不高，但对速度要求高。
 
-#### 2.**all-MiniLM-L12-v2**
+#### all-MiniLM-L12-v2
 
 - **特点**：具有12层Transformer结构，输出384维的嵌入向量。
 - **优点**：
@@ -141,9 +129,9 @@ mxbai-embed-large:335m： 嵌入模型
   - 需要更高精度的语义搜索或文本相似性任务。
   - 有足够的计算资源来支持稍大的模型。
 
-#### 嵌入接口说明
+### 嵌入接口说明
 
-##### 请求参数
+#### 请求参数
 
 调用 `all-MiniLM` 模型的嵌入接口时，通常需要以下参数：
 
@@ -157,7 +145,7 @@ mxbai-embed-large:335m： 嵌入模型
 
 url示例：`http://localhost:1234/v1/embeddings`
 
-##### 单个文本嵌入
+单个文本嵌入：
 
 ```json
 {
@@ -166,7 +154,7 @@ url示例：`http://localhost:1234/v1/embeddings`
 }
 ```
 
-多个文本嵌入
+多个文本嵌入：
 
 ```json
 {
@@ -174,50 +162,3 @@ url示例：`http://localhost:1234/v1/embeddings`
   "input": ["This is a sample sentence.", "Another sentence for embedding."]
 }
 ```
-
-## 模型部署
-
-### 1、本地部署
-
-本地部署是指将大语言模型直接部署在本地服务器或设备上，适合对数据隐私和安全性要求较高的场景。
-
-#### 常见工具：
-
-- **Ollama**：简化本地部署和运行过程，支持多种预构建模型，可自定义模型。
-- **LangChain**：结合检索增强生成（RAG）技术，从文档数据库中检索信息后输入到大语言模型，提升生成内容的准确性和相关性。
-- 使用 LMDeploy 或 TRT-LLM 部署：-企业级推荐
-  * LMDeploy 提供企业级部署方案，支持离线处理和在线服务。 -推荐
-  * TRT-LLM 支持 BF16 和 INT4/INT8 权重，优化推理速度。
-
-#### 优势：
-
-- 数据隐私和安全性高。
-- 可根据需求进行模型微调和优化
-
-### 2、云平台部署
-
-通过云服务提供商部署大语言模型，适合需要高可扩展性和灵活性的场景。
-
-#### 常见工具：
-
-- **Hugging Face Text Generation Inference**：支持在云环境中高效运行大语言模型，提供监控和优化功能。
-- **DeepSpeed-MII**：支持多副本负载均衡，适合处理大量用户请求。
-
-#### 优势：
-
-- 可按需扩展资源。
-- 提供丰富的监控和管理工具
-
-### 3、容器化部署
-
-使用 Docker 或 Kubernetes 等容器化技术部署大语言模型，适合需要快速部署和灵活管理的场景。
-
-#### 常见工具：
-
-- **Docker**：通过 Docker 容器快速部署和运行大语言模型。
-- **Kubernetes**：支持大规模集群管理和弹性扩展。
-
-#### 优势：
-
-- 部署速度快，环境隔离性强。
-- 易于扩展和管理

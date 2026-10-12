@@ -3,7 +3,16 @@
 
 export const aiSidebar = [
     "readme.md",
-    "aiModel.md",
+    {
+        text: "模型与部署",
+        prefix: "/ai/llm/",
+        collapsible: true,
+        children: [
+            "readme.md",
+            "modelGuide.md",
+            "deploy.md",
+        ]
+    },
     {
         text: "提示词库",
         prefix: "/ai/prompts/",
@@ -14,12 +23,40 @@ export const aiSidebar = [
             "workPrompt.md",
         ]
     },
-    "modeTools.md",
-    "skills.md",
-    "useMcp.md",
+    {
+        text: "编码智能体",
+        prefix: "/ai/codingAgents/",
+        collapsible: true,
+        children: [
+            "readme.md",
+            "claudeCode.md",
+            "codex.md",
+            "terminalAgents.md",
+        ]
+    },
+    {
+        text: "生态（Skills 与 MCP）",
+        prefix: "/ai/ecosystem/",
+        collapsible: true,
+        children: [
+            "readme.md",
+            "skills.md",
+            "mcp.md",
+        ]
+    },
+    {
+        text: "应用工具",
+        prefix: "/ai/apps/",
+        collapsible: true,
+        children: [
+            "ragKbApps.md",
+            "designTools.md",
+            "promptTools.md",
+        ]
+    },
+    "projects.md",
     "dotNetCall.md",
     "pythonCall.md",
-    "aiProject.md",
     "sse-streaming-spec.md",
     "harness-engineering.md",
     "sddSpecDrivenDevelopment.md",

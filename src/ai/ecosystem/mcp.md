@@ -1,9 +1,9 @@
 ---
 title: MCP
 lang: zh-CN
-date: 2025-04-03
+date: 2026-10-12
 publish: true
-author:  azrng
+author: azrng
 isOriginal: true
 category:
   - ai
@@ -13,9 +13,7 @@ tag:
 
 ## 概述
 
-MCP（Model Context Protocol，模型上下文协议）是一种开放协议，由 Anthropic 在 2024 年推出。它就像 AI 应用的“USB-C 接口”，让大型语言模型（LLM）能够安全、高效地连接外部数据源和工具。通过 MCP，AI 应用可以访问数据库、文件、API 等资源，还能调用各种工具来执行任务。简单来说，MCP 就是 AI 的“通用翻译器”，让 AI 能更好地与外部世界互动。
-
-
+MCP（Model Context Protocol，模型上下文协议）是一种开放协议，由 Anthropic 在 2024 年推出。它就像 AI 应用的"USB-C 接口"，让大型语言模型（LLM）能够安全、高效地连接外部数据源和工具。通过 MCP，AI 应用可以访问数据库、文件、API 等资源，还能调用各种工具来执行任务。简单来说，MCP 就是 AI 的"通用翻译器"，让 AI 能更好地与外部世界互动。
 
 MCP 的主要目的在于解决当前 AI 模型因数据孤岛限制而无法充分发挥潜力的难题，MCP 使得 AI 应用能够安全地访问和操作本地及远程数据，为 AI 应用提供了连接万物的接口。
 
@@ -23,9 +21,9 @@ MCP 官方文档：https://modelcontextprotocol.io/introduction
 
 各个 clients 对 MCP 的支持情况：https://modelcontextprotocol.io/clients
 
-## Mcp商店
+## MCP 商店
 
-mcpstore：[https://www..site/](https://www.mcpstore.site/)
+mcpstore：https://www.mcpstore.site/
 
 smithery：https://smithery.ai/
 
@@ -41,11 +39,9 @@ AIbase：https://mcp.aibase.cn/explore
 
 ## 代码使用
 
-### Python Sdk
+### Python SDK
 
 MCP Python SDK：MCP Client 和 Server 官方 SDK：https://github.com/modelcontextprotocol/python-sdk
-
-
 
 安装依赖包
 
@@ -53,15 +49,13 @@ MCP Python SDK：MCP Client 和 Server 官方 SDK：https://github.com/modelcont
 uv add "mcp[cli]"
 ```
 
-### .Net Sdk
+### .Net SDK
 
 官方 C# SDK 由原来的 mcpdotnet 发展而来，基于 Microsoft.Extensions.AI 实现。
 
-仓库地址：[https://github.com/modelcontextprotocol/csharp-sdk](https://github.com/modelcontextprotocol/csharp-sdk)
+仓库地址：https://github.com/modelcontextprotocol/csharp-sdk
 
-文档地址：[https://modelcontextprotocol.github.io/csharp-sdk/api/ModelContextProtocol.html](https://modelcontextprotocol.github.io/csharp-sdk/api/ModelContextProtocol.html)
-
-
+文档地址：https://modelcontextprotocol.github.io/csharp-sdk/api/ModelContextProtocol.html
 
 [Semantic Kernel也能充当MCP Client](https://mp.weixin.qq.com/s/FTXTZUWwU45sefqMjq6fUw)
 

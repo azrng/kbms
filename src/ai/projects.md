@@ -1,7 +1,7 @@
 ---
-title: AI项目
+title: 项目与学习资源
 lang: zh-CN
-date: 2024-07-20
+date: 2026-10-12
 publish: true
 author: azrng
 isOriginal: true
@@ -56,7 +56,6 @@ Github：[https://github.com/jantic/DeOldify](https://github.com/jantic/DeOldify
 
 基于换脸+LivePortrait的技术路线，https://github.com/hacksider/Deep-Live-Cam
 
-
 ## 浏览器基础设施
 
 ### Hyperbrowser
@@ -64,7 +63,6 @@ Github：[https://github.com/jantic/DeOldify](https://github.com/jantic/DeOldify
 https://www.hyperbrowser.ai
 
 为AI代理提供稳定的浏览器基础设施服务，支持无头浏览器、指纹识别、代理池等功能，提供从免费到企业级的灵活定价方案。
-
 
 ## AI Agent 学习
 
@@ -95,10 +93,7 @@ https://www.hyperbrowser.ai
 
 ## 其他资料
 
-https://mp.weixin.qq.com/s/oNTfflVQuXiRQnAmumBo4w | 实测 Manus：首个真干活 AI，中国造（附50个用例 + 拆解）
-https://mp.weixin.qq.com/s/moAjXd0X_mU6hhPaQiAkqg | 告别重复操作！这款开源浏览器AI自动化神器，效率提升300%，所有浏览器操作一键搞定
-
-https://mp.weixin.qq.com/s/90GTaLd9nbt_gwLcU1Td_Q | 如何让一个不懂提示词的人优化提示词？AI提示词优化指南
-
-
-https://mp.weixin.qq.com/s/-gmkvqYjVruL63lP-fonuw | 使用vLLM部署工具加速QWQ，推理速度比ollama更快、并发更高
+- https://mp.weixin.qq.com/s/oNTfflVQuXiRQnAmumBo4w | 实测 Manus：首个真干活 AI，中国造（附50个用例 + 拆解）
+- https://mp.weixin.qq.com/s/moAjXd0X_mU6hhPaQiAkqg | 告别重复操作！这款开源浏览器AI自动化神器，效率提升300%，所有浏览器操作一键搞定
+- https://mp.weixin.qq.com/s/90GTaLd9nbt_gwLcU1Td_Q | 如何让一个不懂提示词的人优化提示词？AI提示词优化指南
+- https://mp.weixin.qq.com/s/-gmkvqYjVruL63lP-fonuw | 使用vLLM部署工具加速QWQ，推理速度比ollama更快、并发更高
