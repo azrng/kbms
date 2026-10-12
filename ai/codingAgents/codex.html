@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="generator" content="VuePress 2.0.0-rc.28" />
+    <meta name="theme" content="VuePress Theme Hope 2.0.0-rc.106" />
+    <style>
+      :root {
+        --vp-c-bg: #fff;
+      }
+
+      [data-theme="dark"] {
+        --vp-c-bg: #1b1b1f;
+      }
+
+      html,
+      body {
+        background: var(--vp-c-bg);
+      }
+    </style>
+    <script>
+      const userMode = localStorage.getItem("vuepress-theme-hope-scheme");
+      const systemDarkMode =
+        window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+      if (userMode === "dark" || (userMode !== "light" && systemDarkMode)) {
+        document.documentElement.setAttribute("data-theme", "dark");
+      }
+    </script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"Codex","image":[""],"datePublished":"2026-10-12T00:00:00.000Z","dateModified":"2026-10-12T15:28:05.000Z","author":[{"@type":"Person","name":"azrng"}]}</script><meta property="og:url" content="https://azrng.gitee.io/kbms/kbms/ai/codingAgents/codex.html"><meta property="og:site_name" content="知识库"><meta property="og:title" content="Codex"><meta property="og:description" content="安装 中文乱码问题解决 使用 Codex 时可能遇到中文显示为方块或问号的问题，本质是编码格式在传输链路中&quot;对不上&quot;。 常见成因 解决方案 方案一：安装 PowerShell 7（强烈推荐） PowerShell 7 默认使用 UTF-8，能从根源上减少编码差异： 安装后需配置 VS Code 默认终端： Ctrl+Shift+P ..."><meta property="og:type" content="article"><meta property="og:locale" content="zh-CN"><meta property="og:updated_time" content="2026-10-12T15:28:05.000Z"><meta property="article:author" content="azrng"><meta property="article:tag" content="Codex"><meta property="article:tag" content="编码智能体"><meta property="article:published_time" content="2026-10-12T00:00:00.000Z"><meta property="article:modified_time" content="2026-10-12T15:28:05.000Z"><script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?1f046e495f9c28ef302f30895bda829e";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script><title>Codex | 知识库</title><meta name="description" content="安装 中文乱码问题解决 使用 Codex 时可能遇到中文显示为方块或问号的问题，本质是编码格式在传输链路中&quot;对不上&quot;。 常见成因 解决方案 方案一：安装 PowerShell 7（强烈推荐） PowerShell 7 默认使用 UTF-8，能从根源上减少编码差异： 安装后需配置 VS Code 默认终端： Ctrl+Shift+P ...">
+    <link rel="preload" href="/kbms/assets/style-DpKrt0mi.css" as="style"><link rel="stylesheet" href="/kbms/assets/style-DpKrt0mi.css">
+    <link rel="modulepreload" href="/kbms/assets/app-C9H1yf-4.js"><link rel="modulepreload" href="/kbms/assets/codex-Cye-flFP.js"><link rel="modulepreload" href="/kbms/assets/plugin-vue_export-helper-CDQIAITX.js">
+    
+  </head>
+  <body>
+    <div id="app"><!--[--><!--[--><!--[--><span tabindex="-1"></span><a href="#main-content" class="vp-skip-link sr-only">跳至主要內容</a><!--]--><!----><!--]--><!--[--><!----><!--[--><!--]--><!--]--><!--]--></div>
+    <script type="module" src="/kbms/assets/app-C9H1yf-4.js" defer></script>
+  </body>
+</html>
