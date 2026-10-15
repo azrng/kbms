@@ -212,7 +212,12 @@ project/
 - 响应式
 ```
 
-特别适合的技术栈：**React / Next.js / Tailwind / shadcn/ui / Framer Motion**。
+### anatomy
+
+- **说明**：把抽象技术概念"物化"为一台真实可交互的等距（isometric）机器插图来辅助理解，例如把"缓存 key 未变化就跳过工作"变成一把弹子锁。产出为精细的 SVG 分层图形，可选叠加 WebGL 着色器（火焰、水面、光晕等效果）与真 3D 模式（beta），支持输出独立 HTML 页面、内嵌样式的 `.svg` 文件或 React/Next.js 组件。适用于 Claude Code、OpenCode、Codex、Antigravity。
+- **安装**：`npx skills add wheresryan22/anatomy -g`（可用 `-a claude-code` / `-a antigravity` / `-a opencode` / `-a codex` 指定目标代理）
+- **触发方式**：`/anatomy explain how a token bucket rate limiter works, interactive`
+- **来源**：GitHub：https://github.com/wheresryan22/anatomy
 
 ## 联网、搜索与数据处理
 
