@@ -34,6 +34,7 @@ export const liveSidebar =
             children: [
                 "readme.md",
                 "medical.md",
+                "physicalExamination.md",
                 "music.md"
             ]
         },
