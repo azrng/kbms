@@ -93,6 +93,16 @@ export default hopeTheme({
   // 此处开启了很多功能用于演示，你应仅保留用到的功能。
   markdown: {
     align: true,
+
+    // 代码高亮（shiki）：为 shiki 没有的语言名映射到相近语法，消除 Missing xxx highlighter 警告
+    highlighter: {
+      type: "shiki",
+      langAlias: {
+        gitattributes: "ini",
+        postgresql: "sql",
+        xaml: "xml",
+      },
+    },
     attrs: true,
     codeTabs: true,
     component: true,
