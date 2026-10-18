@@ -52,6 +52,7 @@ export const aiSidebar = [
             "ragKbApps.md",
             "designTools.md",
             "promptTools.md",
+            "googlePlaySubscribe.md",
         ]
     },
     "projects.md",
