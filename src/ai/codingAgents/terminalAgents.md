@@ -133,6 +133,137 @@ omp config set tui.titleState false
 
 这会禁用终端标题中的运行状态动画，不会关闭 Agent 的任务执行能力。尤其适合排查 Windows 任务栏卡顿问题
 
+### 自定义模型配置
+
+两个配置文件分工：
+
+| 文件 | 作用 |
+|---|---|
+| `~/.omp/agent/models.yml` | 配置模型、API、能力、上下文、Token 限制 |
+| `~/.omp/agent/config.yml` | 配置默认模型、视觉模型等角色 |
+
+#### models.yml 推荐配置
+
+```yaml
+providers:
+  gitlab-gateway:
+    name: gitlab-gateway
+    baseUrl: http://aihubgateway-5718-main.sy/v1
+
+    # 根据网关实际支持的 API 选择
+    api: openai-responses
+    apiKey: GITLAB_GATEWAY_API_KEY
+    authHeader: true
+
+    models:
+      - id: glm-flash
+        name: glm-flash
+        reasoning: true
+        input:
+          - text
+          - image
+        supportsTools: true
+        contextWindow: 1000000
+        maxTokens: 128000
+```
+
+注意：`image`、`reasoning`、`supportsTools` 及 Token 上限必须与实际模型能力一致。`apiKey` 示例采用环境变量名称，需提前设置。
+
+#### API 协议选择（重要）
+
+`api` 必须与网关实际支持的接口协议一致：
+
+| 网关支持的接口 | OMP 配置 |
+|---|---|
+| `/v1/responses` | `api: openai-responses` |
+| `/v1/chat/completions` | `api: openai-completions` |
+
+网关只支持 `/v1/chat/completions` 时，必须使用 `api: openai-completions`；网关支持 `/v1/responses` 时，可以使用 `api: openai-responses`。
+
+注意：
+
+- `baseUrl` 通常保留 `/v1`，不要重复拼接完整接口路径。
+- 不能因为网关兼容 OpenAI，就认定它支持 Responses API。
+- 如果两种协议都支持，应优先选择功能完整、兼容性更好的协议。
+- 协议选择错误，可能导致请求失败、工具调用异常或推理信息无法正确处理。
+
+#### 重要配置项
+
+| 配置 | 说明 |
+|---|---|
+| `id` | 模型真实 ID，必须与网关一致 |
+| `api` | `openai-responses` 或 `openai-completions` |
+| `apiKey` | API 密钥或环境变量名称 |
+| `authHeader` | 是否通过 Authorization 请求头传递密钥 |
+| `reasoning` | 模型是否支持推理 |
+| `input` | 支持 `text`、`image` 等输入 |
+| `supportsTools` | 是否支持 Agent 工具调用 |
+| `contextWindow` | 上下文窗口大小 |
+| `maxTokens` | 最大输出 Token 数量 |
+
+可选高级配置：
+
+- `thinking`：设置推理等级，如 low、medium、high，需后端支持。
+- `cost`：配置输入、输出及缓存 Token 价格，便于成本统计。
+- `discovery`：通过 `/v1/models` 自动发现模型。
+- `compat`：适配部分非标准 OpenAI 兼容网关。
+- `imageInputDecoder`：处理特定图片格式兼容问题，例如 WebP。
+
+#### 视觉模型配置
+
+在 `~/.omp/agent/config.yml` 中设置：
+
+```yaml
+modelRoles:
+  default: gitlab-gateway/glm-flash
+  vision: gitlab-gateway/glm-flash
+```
+
+只有模型实际支持识图时，才可以配置为 `vision`。
+
+常见报错：
+
+```text
+Resolved model xxx does not support image input.
+Configure a vision-capable model for modelRoles.vision.
+```
+
+排查顺序：
+
+1. 检查 `models.yml` 的 `input` 是否包含 `image`。
+2. 检查模型本身及网关是否真正支持图片输入。
+3. 检查 `config.yml` 的 `modelRoles.vision`。
+4. 检查模型 ID 是否一致，例如 `glm-flash` 与 `glm-5.3-flash`。
+5. 检查 `api` 是否匹配网关支持的接口协议。
+6. 检查网关是否支持对应的图片传输格式。
+
+#### 常用检查命令
+
+```bash
+# 查看 Provider 下的模型
+omp models gitlab-gateway
+
+# 查找指定模型
+omp models find glm-flash
+
+# 查看模型角色配置
+omp config get modelRoles
+```
+
+重点确认模型是否正确加载、图片支持状态及视觉模型的实际绑定。
+
+#### 核心原则
+
+OMP 模型配置应当真实反映后端能力，而不是把所有参数都打开：
+
+- 必配：`id`、`api`、`apiKey`、`input`、`contextWindow`、`maxTokens`。
+- 重点检查：`reasoning`、`supportsTools`、`modelRoles.vision`。
+- 按需配置：`thinking`、`cost`、`discovery`、`compat`。
+- 网关只支持 `/v1/chat/completions` 时使用 `openai-completions`；支持 `/v1/responses` 时可使用 `openai-responses`。
+- 不要虚报上下文长度或图片能力，否则可能导致请求失败或上下文管理异常。
+
+一句话总结：`models.yml` 负责声明模型能做什么、通过什么协议调用；`config.yml` 负责决定 OMP 用哪个模型做什么，两者必须与网关实际能力保持一致。
+
 ## Cursor
 
 [Cursor生成的UI太丑？四种方法减少UI拉扯](https://mp.weixin.qq.com/s/0yY6N5M4vulBS46y0MuKKg)
