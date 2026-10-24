@@ -51,6 +51,7 @@ export const aiSidebar = [
         children: [
             "ragKbApps.md",
             "designTools.md",
+            "comfyui.md",
             "promptTools.md",
             "googlePlaySubscribe.md",
         ]
