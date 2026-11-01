@@ -44,7 +44,7 @@ Host github.com
   ProxyCommand connect -H 127.0.0.1:7890 %h %p
 ```
 
-> `connect` 是 SSH 代理转发工具；Windows 下可用 Git for Windows 自带方式，若无该命令，可改用：
+> `connect` 本机未安装（`command -v connect` 为空），需要先装或用 Git 自带的完整路径写法：
 >
 > ```
 > Host github.com
@@ -78,18 +78,31 @@ git pull
 > git config --global http.https://github.com.proxy http://127.0.0.1:7890
 > ```
 
-### 临时方案：单次拉取不走配置（本次实际使用）
-
-不开任何永久配置，拉取时临时指定代理与 HTTPS 地址：
+### 方案三：单次拉取指定代理（不污染全局配置）
 
 ```bash
-# 拉取并合并
-https_proxy=http://127.0.0.1:7890 git pull https://github.com/<user>/<repo>.git main
+# bash / git bash
+git -c http.proxy=http://127.0.0.1:7890 pull https://github.com/<user>/<repo>.git main
 
-# 同步远程跟踪分支（remote 还是 SSH 地址时）
-https_proxy=http://127.0.0.1:7890 \
-  git fetch https://github.com/<user>/<repo>.git main:refs/remotes/origin/main
+# PowerShell
+$env:https_proxy="http://127.0.0.1:7890"; git pull https://github.com/<user>/<repo>.git main
 ```
+
+> 拉取时带上分支名 `main`，避免 `git pull <url>` 未指定 refspec 的歧义。
+
+## 一键代理拉取脚本
+
+项目根目录提供 `pull-proxy.bat`（纯 ASCII + CRLF，别转成 LF 或加 `chcp 65001`，否则 cmd 解析会挂死）：
+
+```bat
+:: PowerShell / cmd 中执行（默认拉 main）
+.\pull-proxy.bat
+
+:: 指定分支
+.\pull-proxy.bat main
+```
+
+行为：走 `127.0.0.1:7890` 代理，通过 HTTPS 拉取 `azrng/kbms` 指定分支并合并到当前分支，失败时提示检查代理端口。
 
 ## 取消代理配置
 
@@ -104,6 +117,9 @@ git config --global --unset http.https://github.com.proxy
 | 现象 | 原因 | 处理 |
 | --- | --- | --- |
 | 开了代理 `git fetch origin` 仍挂死 | origin 是 SSH 地址，代理不接管 SSH 流量 | 用方案一给 SSH 挂代理，或方案二改 HTTPS |
-| `https_proxy` 环境变量在 PowerShell 不生效 | PowerShell 不识别小写 env 语法 | 用 `$env:https_proxy="http://127.0.0.1:7890"` |
+| `https_proxy=... git pull` 在 PowerShell 报错 | PowerShell 不识别 bash 的 env 前缀语法 | 用 `$env:https_proxy="http://127.0.0.1:7890"` 前置赋值 |
+| `$env:https_proxy` 设了还是慢（十几 KiB/s） | origin 是 SSH 地址，环境变量对 SSH 无效，流量没走代理 | 确认拉取时用的是 HTTPS 地址或远程已改为 HTTPS |
+| 每次 pull 都重新下载上万个对象、越来越慢 | fetch refspec 是全部分支，某分支对象缺失导致每次全量重拉 | `git config remote.origin.fetch "+refs/heads/main:refs/remotes/origin/main"` 只跟踪 main；`git branch -rd origin/<坏分支>` 删坏引用 |
+| `.git/objects/pack` 出现大量 tmp_pack 垃圾（数百 MB） | 拉取中断（Ctrl+C / 超时）残留的临时包 | 删除：`rm -f .git/objects/pack/tmp_pack_*`（PowerShell: `Remove-Item .git\objects\pack\tmp_pack_*`） |
 | 代理重启后端口变化 | 客户端动态端口 | `netstat -ano | findstr 7890` 确认后再用 |
 | 合并时卡在编辑器界面 | `git pull` 触发 merge 打开 vim 等待输入 | `git config --global core.editor "vim"` 明确编辑器，或 `Esc` 后输入 `:wq` 退出 |
